@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Phone Store Application
 
 He thong gom 3 module Spring Boot:
@@ -93,3 +94,6 @@ mvnw.cmd clean package -DskipTests
 - `core-api` dang tro vao database `phone_store`
 - cac script DB legacy da duoc loai bo khoi luong chay chinh
 - neu muon chay end-to-end, can MySQL local dang bat va cho phep user `root`
+=======
+# phone_web
+>>>>>>> 02194c0586ac6a9d8013c656cd99aec029548817
