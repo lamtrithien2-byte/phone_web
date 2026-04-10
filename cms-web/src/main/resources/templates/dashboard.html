@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CMS Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: #f5f7fa;
+            color: #1f2933;
+        }
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #18354a, #3f6c7f);
+            color: #fff;
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .nav {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .nav a {
+            color: #fff;
+            font-weight: 700;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .stat {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+        }
+        .stat strong {
+            display: block;
+            font-size: 28px;
+            margin-top: 8px;
+        }
+        form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .product-form {
+            display: block;
+            margin-bottom: 0;
+        }
+        .product-form input, .product-form textarea, .product-form select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #ccd5dd;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .product-form textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+        input, button {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #ccd5dd;
+            font-size: 15px;
+        }
+        input {
+            flex: 1;
+        }
+        button {
+            background: #18354a;
+            color: #fff;
+            border: 0;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+        }
+        .panel {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+        }
+        th, td {
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        th {
+            background: #eff4f8;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .actions form {
+            margin: 0;
+        }
+        .link-btn {
+            display: inline-block;
+            padding: 10px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            background: #eff4f8;
+            color: #18354a;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="hero">
+        <h1>CMS Dashboard</h1>
+        <p th:text="'Dang o che do: ' + ${role} + '. Danh sach san pham duoc tai thong qua Core API.'"></p>
+        <div class="nav">
+            <a th:href="${salesUrl}">Sales</a>
+            <a th:href="${employeesUrl}">Nhan vien</a>
+            <a th:href="${profileUrl}">Ho so</a>
+            <a th:href="${shopUrl}" target="_blank">Shop online</a>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" style="padding:0; background:none; border:0; color:#fff; font-weight:700;">Dang xuat</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="stats" th:if="${summary != null}">
+        <div class="stat">
+            <span>Tong doanh thu</span>
+            <strong th:text="${summary.money()}"></strong>
+        </div>
+        <div class="stat">
+            <span>Tong san pham</span>
+            <strong th:text="${summary.quantity()}"></strong>
+        </div>
+        <div class="stat">
+            <span>So hoa don</span>
+            <strong th:text="${summary.invoiceNumber()}"></strong>
+        </div>
+        <div class="stat">
+            <span>So nhan vien</span>
+            <strong th:text="${summary.userNumber()}"></strong>
+        </div>
+    </section>
+
+    <form method="get" action="/dashboard">
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="Tim theo ten, barcode, category">
+        <button type="submit">Tim san pham</button>
+    </form>
+
+    <p th:if="${success}" th:text="${success}" style="color:#166534; font-weight:600;"></p>
+    <p th:if="${error}" th:text="${error}" style="color:#a12626; font-weight:600;"></p>
+
+    <div class="layout">
+        <section class="panel">
+            <h2 th:text="${editing} ? 'Cap nhat san pham' : 'Them san pham'"></h2>
+            <form class="product-form" method="post" th:action="${editing} ? '/dashboard/products/update' : '/dashboard/products/create'">
+                <label>Barcode</label>
+                <input type="text" name="barCode" th:value="${productForm.barCode()}" th:readonly="${editing}" required>
+                <label>Ten san pham</label>
+                <input type="text" name="name" th:value="${productForm.name()}" required>
+                <label>Screen size</label>
+                <input type="text" name="screenSize" th:value="${productForm.screenSize()}">
+                <label>RAM</label>
+                <input type="text" name="ram" th:value="${productForm.ram()}">
+                <label>ROM</label>
+                <input type="text" name="rom" th:value="${productForm.rom()}">
+                <label>Gia nhap</label>
+                <input type="number" name="importPrice" th:value="${productForm.importPrice()}" required>
+                <label>Gia ban</label>
+                <input type="number" name="priceSale" th:value="${productForm.priceSale()}" required>
+                <label>Mo ta</label>
+                <textarea name="description" th:text="${productForm.description()}"></textarea>
+                <label>Hinh anh</label>
+                <input type="text" name="imageLink" th:value="${productForm.imageLink()}">
+                <label>So luong da ban</label>
+                <input type="number" name="saleNumber" th:value="${productForm.saleNumber() ?: 0}">
+                <label>Danh muc</label>
+                <select name="categoryId" required>
+                    <option th:each="category : ${categories}"
+                            th:value="${category.id()}"
+                            th:text="${category.categoryName()}"
+                            th:selected="${selectedCategoryId != null ? selectedCategoryId == category.id() : productForm.categoryName() == category.categoryName()}">
+                    </option>
+                </select>
+                <button type="submit" th:text="${editing} ? 'Luu cap nhat' : 'Them san pham'"></button>
+                <a class="link-btn" href="/dashboard">Lam moi form</a>
+            </form>
+        </section>
+
+        <section>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ten</th>
+                    <th>Danh muc</th>
+                    <th>RAM</th>
+                    <th>ROM</th>
+                    <th>Gia ban</th>
+                    <th>Thao tac</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="product : ${products}">
+                    <td th:text="${product.id()}"></td>
+                    <td th:text="${product.name()}"></td>
+                    <td th:text="${product.categoryName()}"></td>
+                    <td th:text="${product.ram()}"></td>
+                    <td th:text="${product.rom()}"></td>
+                    <td th:text="${product.priceSale()}"></td>
+                    <td class="actions">
+                        <a class="link-btn" th:href="@{/dashboard(editBarCode=${product.barCode()}, keyword=${keyword})}">Sua</a>
+                        <form method="post" action="/dashboard/products/delete">
+                            <input type="hidden" name="barCode" th:value="${product.barCode()}">
+                            <button type="submit">Xoa</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(products)}">
+                    <td colspan="7">Khong co du lieu tu Core API.</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <h2 style="margin-top:28px;">Doanh thu theo nhan vien</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nhan vien</th>
+            <th>So hoa don</th>
+            <th>Tong san pham</th>
+            <th>Doanh thu</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${staffRevenue}">
+            <td th:text="${item.userId()}"></td>
+            <td th:text="${item.fullName()}"></td>
+            <td th:text="${item.invoiceCount()}"></td>
+            <td th:text="${item.totalQuantity()}"></td>
+            <td th:text="${item.totalRevenue()}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(staffRevenue)}">
+            <td colspan="5">Chua co du lieu doanh thu.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

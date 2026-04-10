@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | San Pham</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Dien thoai chinh hang, giao nhanh, gia ro rang</span>
+        <span><a th:href="@{/tracking}">Tra cuu don hang</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Ban hang online</span>
+            </div>
+        </a>
+        <form class="search-bar" method="get" th:action="@{/products}">
+            <input type="text" value="San pham dien thoai chinh hang" readonly>
+            <input type="hidden" name="sort" th:value="${selectedSort}">
+            <input type="hidden" name="minPrice" th:value="${minPrice}">
+            <input type="hidden" name="maxPrice" th:value="${maxPrice}">
+            <a class="primary-btn" th:href="@{/tracking}">Tra cuu don</a>
+        </form>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>Hotline</strong>
+                <span>1900 0000</span>
+            </div>
+            <div class="quick-pill">
+                <strong>Theo doi don</strong>
+                <span><a th:href="@{/tracking}">Mo trang tra cuu</a></span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">Tat ca san pham</a>
+            <a class="nav-chip" th:href="@{/tracking}">Don hang</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="hero-simple">
+        <section class="hero-banner">
+            <div class="eyebrow">Gian hang dien thoai</div>
+            <h1>Chon may de dat mua nhanh trong it buoc nhat.</h1>
+            <p>Danh sach san pham duoc sap xep gon gang, de tim, de so sanh, de dat hang.</p>
+        </section>
+        <div class="hero-side-stack">
+            <article class="hero-side-card">
+                <div class="mini-tag">Danh muc noi bat</div>
+                <h3>iPhone, Samsung, Android</h3>
+                <p>Loc nhanh theo danh muc va muc gia ngay tren trang san pham.</p>
+            </article>
+            <article class="hero-side-card">
+                <div class="mini-tag">Tra cuu de dang</div>
+                <h3>Theo doi don theo so dien thoai</h3>
+                <p>Sau khi dat hang co the vao trang tracking de xem trang thai moi nhat.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="layout-main">
+        <aside class="filter-panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Bo loc</div>
+                    <h3>Loc san pham</h3>
+                </div>
+            </div>
+            <form method="get" th:action="@{/products}">
+                <div class="filter-group">
+                    <label for="sortFilter">Sap xep</label>
+                    <select id="sortFilter" name="sort">
+                        <option value="" th:selected="${selectedSort == ''}">Mac dinh</option>
+                        <option value="newest" th:selected="${selectedSort == 'newest'}">Moi nhat</option>
+                        <option value="best_selling" th:selected="${selectedSort == 'best_selling'}">Ban chay</option>
+                        <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Gia thap den cao</option>
+                        <option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Gia cao den thap</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="minPrice">Gia tu</label>
+                    <input id="minPrice" type="number" name="minPrice" min="0" th:value="${minPrice}" placeholder="0">
+                </div>
+
+                <div class="filter-group">
+                    <label for="maxPrice">Gia den</label>
+                    <input id="maxPrice" type="number" name="maxPrice" min="0" th:value="${maxPrice}" placeholder="50000000">
+                </div>
+
+                <div class="button-row">
+                    <a class="ghost-btn" th:href="@{/products}">Lam moi</a>
+                    <button type="submit" class="primary-btn">Ap dung</button>
+                </div>
+            </form>
+        </aside>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">San pham</div>
+                    <h2>Danh sach san pham</h2>
+                    <p th:text="${#lists.size(products)} + ' san pham phu hop voi bo loc hien tai.'">0 san pham</p>
+                </div>
+            </div>
+
+            <div class="product-grid" th:if="${!#lists.isEmpty(products)}">
+                <article class="product-card" th:each="product : ${products}">
+                    <div class="product-media">
+                        <img th:if="${product.imageLink() != null and !#strings.isEmpty(product.imageLink())}"
+                             th:src="${product.imageLink()}"
+                             th:alt="${product.name()}">
+                        <div class="media-fallback" th:if="${product.imageLink() == null or #strings.isEmpty(product.imageLink())}">
+                            <span th:text="${product.name()}">Phone</span>
+                        </div>
+                    </div>
+                    <div class="product-body">
+                        <div class="status-tag" th:text="${product.categoryName()}">Danh muc</div>
+                        <h3 class="product-title" th:text="${product.name()}">Ten san pham</h3>
+                        <div class="muted" th:text="'RAM ' + ${product.ram()} + ' | ROM ' + ${product.rom()}">Cau hinh</div>
+                        <div class="price" th:text="${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">0 VND</div>
+                        <div class="actions-row">
+                            <a class="ghost-btn" th:href="@{/products/{id}(id=${product.id()},chatSessionCode=${chatSessionCode},chatGuestName=${chatGuestName})}">Xem chi tiet</a>
+                            <form method="post" th:action="@{/checkout}">
+                                <input type="hidden" name="productId" th:value="${product.id()}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="primary-btn" style="width:100%;">Mua ngay</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(products)}">
+                Khong tim thay san pham phu hop. Thu doi cach sap xep hoac khoang gia.
+            </div>
+        </section>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <article class="footer-card">
+                <h4>Phone Store</h4>
+                <p>Trang ban hang dien thoai chinh hang voi luong dat mua gon gang.</p>
+            </article>
+            <article class="footer-card">
+                <h4>San pham</h4>
+                <p>Danh sach ro rang, bo loc don gian, card de quan sat.</p>
+            </article>
+            <article class="footer-card">
+                <h4>Thanh toan</h4>
+                <p>Dat hang nhanh, hien tong tien ro rang truoc khi xac nhan.</p>
+            </article>
+            <article class="footer-card">
+                <h4>Ho tro</h4>
+                <p>Bubble chat nam gon o goc phai de hoi nhanh khi can.</p>
+            </article>
+        </div>
+    </footer>
+
+    <div class="chat-widget">
+        <input class="chat-widget-toggle" type="checkbox" id="chatWidgetToggle" th:checked="${chatOpen}">
+        <div class="chat-widget-panel">
+            <div class="chat-widget-header">
+                <strong>Ho tro nhanh</strong>
+                <span>Hoi ngan gon de duoc goi y.</span>
+            </div>
+            <div class="chat-widget-body">
+                <div class="chat-feed" th:if="${chatHistory != null and !#lists.isEmpty(chatHistory.history())}">
+                    <div th:each="message : ${chatHistory.history()}"
+                         th:class="'bubble ' + ${#strings.equalsIgnoreCase(message.senderType(), 'AI') ? 'ai' : 'user'}">
+                        <div th:text="${message.messageText()}"></div>
+                    </div>
+                </div>
+                <div class="empty-state" th:if="${chatHistory == null or #lists.isEmpty(chatHistory.history())}" style="margin-bottom:12px;">
+                    Nhap cau hoi de nhan tu van nhanh.
+                </div>
+                <form method="post" th:action="@{/agent/chat}">
+                    <input type="hidden" name="returnPage" value="products">
+                    <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                    <div class="field-grid">
+                        <div>
+                            <label for="chatGuestNameProducts">Ten</label>
+                            <input id="chatGuestNameProducts" type="text" name="chatGuestName" th:value="${chatGuestName}" placeholder="Khach hang">
+                        </div>
+                        <div>
+                            <label for="chatMessageProducts">Noi dung</label>
+                            <input id="chatMessageProducts" type="text" name="chatMessage" placeholder="Can tu van gi?">
+                        </div>
+                    </div>
+                    <div class="button-row" style="margin-top:12px;">
+                        <label class="ghost-btn" for="chatWidgetToggle">Dong</label>
+                        <button type="submit" class="primary-btn">Gui</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <label class="chat-widget-button" for="chatWidgetToggle">Chat</label>
+    </div>
+</main>
+</body>
+</html>

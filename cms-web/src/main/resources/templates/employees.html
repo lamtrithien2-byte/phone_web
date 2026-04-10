@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Manager</title>
+    <style>
+        body { margin:0; font-family:"Segoe UI",sans-serif; background:#f5f7fa; color:#1f2933; }
+        .page { max-width:1100px; margin:0 auto; padding:32px 20px 48px; }
+        .hero { background:linear-gradient(135deg,#26455f,#5e879b); color:#fff; border-radius:24px; padding:28px; margin-bottom:24px; }
+        .nav { display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+        .nav a { color:#fff; font-weight:700; }
+        .grid { display:grid; grid-template-columns:0.9fr 1.1fr; gap:20px; }
+        .card { background:#fff; border-radius:18px; padding:20px; box-shadow:0 12px 30px rgba(16,24,40,.08); }
+        .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        input, button { width:100%; box-sizing:border-box; padding:11px 12px; margin:8px 0 12px; border-radius:10px; border:1px solid #ced6dd; }
+        button { background:#26455f; color:#fff; border:0; font-weight:700; cursor:pointer; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:10px 8px; border-bottom:1px solid #edf1f5; text-align:left; }
+        .ok { color:#166534; font-weight:700; }
+        .err { color:#a12626; font-weight:700; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="hero">
+        <h1>Quan ly nhan vien</h1>
+        <div class="nav">
+            <a th:href="${salesUrl}">Ban hang</a>
+            <a th:href="${dashboardUrl}">Dashboard</a>
+            <a th:href="${profileUrl}">Ho so</a>
+            <a th:href="${shopUrl}" target="_blank">Shop online</a>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit" style="width:auto; margin:0; background:none; border:0; color:#fff; font-weight:700;">Dang xuat</button>
+            </form>
+        </div>
+    </section>
+    <p th:if="${success}" th:text="${success}" class="ok"></p>
+    <p th:if="${error}" th:text="${error}" class="err"></p>
+    <div class="grid">
+        <section class="card">
+            <h2>Tao nhan vien</h2>
+            <form method="post" action="/employees">
+                <div class="row">
+                    <div>
+                        <label>Tai khoan</label>
+                        <input type="text" name="userName" required>
+                    </div>
+                    <div>
+                        <label>Mat khau</label>
+                        <input type="text" name="password" value="TDTU2088" required>
+                    </div>
+                </div>
+                <label>Ho ten</label>
+                <input type="text" name="fullName" required>
+                <label>Email</label>
+                <input type="email" name="email" required>
+                <label>Dia chi</label>
+                <input type="text" name="address" required>
+                <label>So dien thoai</label>
+                <input type="text" name="phoneNumber" required>
+                <button type="submit">Tao staff</button>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Danh sach nhan vien</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ten</th>
+                    <th>Tai khoan</th>
+                    <th>Email</th>
+                    <th>Trang thai</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="staff : ${staffList}">
+                    <td th:text="${staff.id()}"></td>
+                    <td th:text="${staff.fullName()}"></td>
+                    <td th:text="${staff.userName()}"></td>
+                    <td th:text="${staff.email()}"></td>
+                    <td th:text="${staff.isDeleted()} ? 'Da khoa' : 'Hoat dong'"></td>
+                    <td>
+                        <form method="post" action="/employees/toggle">
+                            <input type="hidden" name="staffId" th:value="${staff.id()}">
+                            <button type="submit" th:text="${staff.isDeleted()} ? 'Mo khoa' : 'Khoa'"></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+</body>
+</html>

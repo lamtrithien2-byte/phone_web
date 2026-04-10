@@ -1,0 +1,1268 @@
+﻿{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Consolas;}{\\f1 Segoe UI;}}\\fs22 PHONE STORE - STORED PROCEDURES\\par
+\\par
+Tai lieu nay duoc trich tu file scripts\\\\phone_store_full_setup.sql\\par
+No gom toan bo stored procedure cho tat ca chuc nang hien co trong he thong.\\par
+\\par
+============================\\par
+NOI DUNG PROCEDURES\\par
+============================\\par
+DELIMITER $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_login $$\\par
+CREATE PROCEDURE sp_auth_login(IN p_user_name VARCHAR(100))\\par
+BEGIN\\par
+    SELECT u.id,\\par
+           u.user_name,\\par
+           u.password_hash,\\par
+           u.full_name,\\par
+           u.email,\\par
+           u.address,\\par
+           u.phone_number,\\par
+           u.avatar,\\par
+           u.activation_token,\\par
+           u.is_activated,\\par
+           u.first_login,\\par
+           u.is_deleted,\\par
+           r.role_code AS role_name\\par
+    FROM users u\\par
+    JOIN user_role ur ON ur.user_id = u.id\\par
+    JOIN roles r ON r.id = ur.role_id\\par
+    WHERE u.user_name = p_user_name\\par
+      AND u.is_deleted = FALSE\\par
+    ORDER BY r.id\\par
+    LIMIT 1;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_create_staff $$\\par
+CREATE PROCEDURE sp_auth_create_staff(\\par
+    IN p_user_name VARCHAR(100),\\par
+    IN p_password_hash VARCHAR(255),\\par
+    IN p_full_name VARCHAR(150),\\par
+    IN p_email VARCHAR(150),\\par
+    IN p_address VARCHAR(255),\\par
+    IN p_phone_number VARCHAR(20),\\par
+    IN p_activation_token VARCHAR(255),\\par
+    IN p_activation_expires DATETIME\\par
+)\\par
+BEGIN\\par
+    DECLARE v_user_id BIGINT;\\par
+    DECLARE v_role_id BIGINT;\\par
+\\par
+    INSERT INTO users(\\par
+        user_name, password_hash, full_name, email, address, phone_number,\\par
+        activation_token, activation_expires, is_activated, first_login, is_deleted\\par
+    ) VALUES (\\par
+        p_user_name, p_password_hash, p_full_name, p_email, p_address, p_phone_number,\\par
+        p_activation_token, p_activation_expires, IF(p_activation_token IS NULL, TRUE, FALSE), TRUE, FALSE\\par
+    );\\par
+\\par
+    SET v_user_id = LAST_INSERT_ID();\\par
+    SELECT id INTO v_role_id FROM roles WHERE role_code = 'STAFF' LIMIT 1;\\par
+    INSERT INTO user_role(user_id, role_id) VALUES (v_user_id, v_role_id);\\par
+\\par
+    CALL sp_audit_log_add(v_user_id, 'AUTH', 'CREATE_STAFF', 'users', v_user_id, JSON_OBJECT('user_name', p_user_name));\\par
+\\par
+    SELECT v_user_id AS user_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_activate_account $$\\par
+CREATE PROCEDURE sp_auth_activate_account(IN p_token VARCHAR(255))\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET is_activated = TRUE,\\par
+        activation_token = NULL,\\par
+        activation_expires = NULL,\\par
+        updated_at = NOW()\\par
+    WHERE activation_token = p_token\\par
+      AND is_deleted = FALSE\\par
+      AND (activation_expires IS NULL OR activation_expires >= NOW());\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_change_first_password $$\\par
+CREATE PROCEDURE sp_auth_change_first_password(\\par
+    IN p_user_id BIGINT,\\par
+    IN p_password_hash VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET password_hash = p_password_hash,\\par
+        first_login = FALSE,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_create_reset_token $$\\par
+CREATE PROCEDURE sp_auth_create_reset_token(\\par
+    IN p_email VARCHAR(150),\\par
+    IN p_token VARCHAR(255),\\par
+    IN p_expires DATETIME\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET activation_token = p_token,\\par
+        activation_expires = p_expires,\\par
+        updated_at = NOW()\\par
+    WHERE email = p_email\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_auth_reset_password $$\\par
+CREATE PROCEDURE sp_auth_reset_password(\\par
+    IN p_token VARCHAR(255),\\par
+    IN p_password_hash VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET password_hash = p_password_hash,\\par
+        first_login = FALSE,\\par
+        activation_token = NULL,\\par
+        activation_expires = NULL,\\par
+        updated_at = NOW()\\par
+    WHERE activation_token = p_token\\par
+      AND activation_expires IS NOT NULL\\par
+      AND activation_expires >= NOW()\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_get_all_staff $$\\par
+CREATE PROCEDURE sp_user_get_all_staff()\\par
+BEGIN\\par
+    SELECT u.id,\\par
+           u.user_name,\\par
+           u.full_name,\\par
+           u.email,\\par
+           u.address,\\par
+           u.phone_number,\\par
+           u.avatar,\\par
+           u.is_activated,\\par
+           u.is_deleted\\par
+    FROM users u\\par
+    JOIN user_role ur ON ur.user_id = u.id\\par
+    JOIN roles r ON r.id = ur.role_id\\par
+    WHERE r.role_code = 'STAFF'\\par
+    ORDER BY u.created_at DESC, u.id DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_get_profile $$\\par
+CREATE PROCEDURE sp_user_get_profile(IN p_user_id BIGINT)\\par
+BEGIN\\par
+    SELECT u.id,\\par
+           u.user_name,\\par
+           u.full_name,\\par
+           u.email,\\par
+           u.address,\\par
+           u.phone_number,\\par
+           u.avatar,\\par
+           u.first_login,\\par
+           u.is_activated,\\par
+           u.is_deleted,\\par
+           r.role_code AS role_name\\par
+    FROM users u\\par
+    JOIN user_role ur ON ur.user_id = u.id\\par
+    JOIN roles r ON r.id = ur.role_id\\par
+    WHERE u.id = p_user_id\\par
+    ORDER BY r.id\\par
+    LIMIT 1;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_update_profile $$\\par
+CREATE PROCEDURE sp_user_update_profile(\\par
+    IN p_user_id BIGINT,\\par
+    IN p_full_name VARCHAR(150),\\par
+    IN p_email VARCHAR(150),\\par
+    IN p_address VARCHAR(255),\\par
+    IN p_phone_number VARCHAR(20),\\par
+    IN p_avatar VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET full_name = p_full_name,\\par
+        email = p_email,\\par
+        address = p_address,\\par
+        phone_number = p_phone_number,\\par
+        avatar = p_avatar,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_update_avatar $$\\par
+CREATE PROCEDURE sp_user_update_avatar(\\par
+    IN p_user_id BIGINT,\\par
+    IN p_avatar VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET avatar = p_avatar,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_change_password $$\\par
+CREATE PROCEDURE sp_user_change_password(\\par
+    IN p_user_id BIGINT,\\par
+    IN p_password_hash VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET password_hash = p_password_hash,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_toggle_lock $$\\par
+CREATE PROCEDURE sp_user_toggle_lock(IN p_user_id BIGINT)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET is_deleted = NOT is_deleted,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_user_mark_login $$\\par
+CREATE PROCEDURE sp_user_mark_login(IN p_user_id BIGINT)\\par
+BEGIN\\par
+    UPDATE users\\par
+    SET last_login_at = NOW(),\\par
+        updated_at = NOW()\\par
+    WHERE id = p_user_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_category_get_all $$\\par
+CREATE PROCEDURE sp_category_get_all()\\par
+BEGIN\\par
+    SELECT id, category_name\\par
+    FROM categories\\par
+    WHERE is_deleted = FALSE\\par
+    ORDER BY category_name;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_category_upsert $$\\par
+CREATE PROCEDURE sp_category_upsert(\\par
+    IN p_category_id BIGINT,\\par
+    IN p_category_name VARCHAR(150),\\par
+    IN p_category_slug VARCHAR(180),\\par
+    IN p_description VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    IF p_category_id IS NULL OR p_category_id = 0 THEN\\par
+        INSERT INTO categories(category_name, category_slug, description)\\par
+        VALUES (p_category_name, p_category_slug, p_description);\\par
+        SELECT LAST_INSERT_ID() AS category_id;\\par
+    ELSE\\par
+        UPDATE categories\\par
+        SET category_name = p_category_name,\\par
+            category_slug = p_category_slug,\\par
+            description = p_description,\\par
+            updated_at = NOW()\\par
+        WHERE id = p_category_id;\\par
+        SELECT p_category_id AS category_id;\\par
+    END IF;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_brand_get_all $$\\par
+CREATE PROCEDURE sp_brand_get_all()\\par
+BEGIN\\par
+    SELECT id, brand_name, brand_slug, logo_url, description\\par
+    FROM brands\\par
+    WHERE is_deleted = FALSE\\par
+    ORDER BY brand_name;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_get_all $$\\par
+CREATE PROCEDURE sp_product_get_all()\\par
+BEGIN\\par
+    SELECT p.id,\\par
+           p.bar_code,\\par
+           p.name,\\par
+           p.screen_size,\\par
+           p.ram,\\par
+           p.rom,\\par
+           p.import_price,\\par
+           p.price_sale,\\par
+           p.description,\\par
+           p.image_link,\\par
+           p.sale_number,\\par
+           p.created_date,\\par
+           p.updated_date,\\par
+           p.is_deleted,\\par
+           c.category_name\\par
+    FROM products p\\par
+    JOIN categories c ON c.id = p.category_id\\par
+    WHERE p.is_deleted = FALSE\\par
+    ORDER BY p.created_date DESC, p.id DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_get_public_catalog $$\\par
+CREATE PROCEDURE sp_product_get_public_catalog()\\par
+BEGIN\\par
+    SELECT p.id,\\par
+           p.bar_code,\\par
+           p.name,\\par
+           p.screen_size,\\par
+           p.ram,\\par
+           p.rom,\\par
+           p.import_price,\\par
+           p.price_sale,\\par
+           p.description,\\par
+           p.image_link,\\par
+           p.sale_number,\\par
+           p.created_date,\\par
+           p.updated_date,\\par
+           p.is_deleted,\\par
+           c.category_name\\par
+    FROM products p\\par
+    JOIN categories c ON c.id = p.category_id\\par
+    WHERE p.is_deleted = FALSE\\par
+      AND p.stock_quantity > 0\\par
+    ORDER BY p.is_featured DESC, p.sale_number DESC, p.created_date DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_get_by_barcode $$\\par
+CREATE PROCEDURE sp_product_get_by_barcode(IN p_bar_code VARCHAR(50))\\par
+BEGIN\\par
+    SELECT p.id,\\par
+           p.bar_code,\\par
+           p.name,\\par
+           p.screen_size,\\par
+           p.ram,\\par
+           p.rom,\\par
+           p.import_price,\\par
+           p.price_sale,\\par
+           p.description,\\par
+           p.image_link,\\par
+           p.sale_number,\\par
+           p.created_date,\\par
+           p.updated_date,\\par
+           p.is_deleted,\\par
+           c.category_name\\par
+    FROM products p\\par
+    JOIN categories c ON c.id = p.category_id\\par
+    WHERE p.bar_code = p_bar_code\\par
+    LIMIT 1;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_search $$\\par
+CREATE PROCEDURE sp_product_search(IN p_keyword VARCHAR(150))\\par
+BEGIN\\par
+    SELECT p.id,\\par
+           p.bar_code,\\par
+           p.name,\\par
+           p.screen_size,\\par
+           p.ram,\\par
+           p.rom,\\par
+           p.import_price,\\par
+           p.price_sale,\\par
+           p.description,\\par
+           p.image_link,\\par
+           p.sale_number,\\par
+           p.created_date,\\par
+           p.updated_date,\\par
+           p.is_deleted,\\par
+           c.category_name\\par
+    FROM products p\\par
+    JOIN categories c ON c.id = p.category_id\\par
+    LEFT JOIN brands b ON b.id = p.brand_id\\par
+    WHERE p.is_deleted = FALSE\\par
+      AND (\\par
+          p.bar_code LIKE CONCAT('%', p_keyword, '%')\\par
+          OR p.sku LIKE CONCAT('%', p_keyword, '%')\\par
+          OR p.name LIKE CONCAT('%', p_keyword, '%')\\par
+          OR c.category_name LIKE CONCAT('%', p_keyword, '%')\\par
+          OR COALESCE(b.brand_name, '') LIKE CONCAT('%', p_keyword, '%')\\par
+      )\\par
+    ORDER BY p.sale_number DESC, p.created_date DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_create $$\\par
+CREATE PROCEDURE sp_product_create(\\par
+    IN p_bar_code VARCHAR(50),\\par
+    IN p_name VARCHAR(200),\\par
+    IN p_screen_size VARCHAR(50),\\par
+    IN p_ram VARCHAR(50),\\par
+    IN p_rom VARCHAR(50),\\par
+    IN p_import_price INT,\\par
+    IN p_price_sale INT,\\par
+    IN p_description TEXT,\\par
+    IN p_image_link VARCHAR(255),\\par
+    IN p_category_id BIGINT\\par
+)\\par
+BEGIN\\par
+    INSERT INTO products(\\par
+        bar_code, sku, name, product_slug, category_id, screen_size, ram, rom,\\par
+        import_price, price_sale, description, image_link, stock_quantity, sale_number,\\par
+        created_by, updated_by\\par
+    ) VALUES (\\par
+        p_bar_code,\\par
+        CONCAT('SKU-', p_bar_code),\\par
+        p_name,\\par
+        LOWER(REPLACE(REPLACE(CONCAT(p_name, '-', p_bar_code), ' ', '-'), '--', '-')),\\par
+        p_category_id,\\par
+        p_screen_size,\\par
+        p_ram,\\par
+        p_rom,\\par
+        p_import_price,\\par
+        p_price_sale,\\par
+        p_description,\\par
+        p_image_link,\\par
+        0,\\par
+        0,\\par
+        1,\\par
+        1\\par
+    );\\par
+\\par
+    SELECT LAST_INSERT_ID() AS product_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_update $$\\par
+CREATE PROCEDURE sp_product_update(\\par
+    IN p_bar_code VARCHAR(50),\\par
+    IN p_name VARCHAR(200),\\par
+    IN p_screen_size VARCHAR(50),\\par
+    IN p_import_price INT,\\par
+    IN p_price_sale INT,\\par
+    IN p_ram VARCHAR(50),\\par
+    IN p_rom VARCHAR(50),\\par
+    IN p_description TEXT,\\par
+    IN p_sale_number INT,\\par
+    IN p_image_link VARCHAR(255),\\par
+    IN p_category_id BIGINT\\par
+)\\par
+BEGIN\\par
+    UPDATE products\\par
+    SET name = p_name,\\par
+        screen_size = p_screen_size,\\par
+        import_price = p_import_price,\\par
+        price_sale = p_price_sale,\\par
+        ram = p_ram,\\par
+        rom = p_rom,\\par
+        description = p_description,\\par
+        sale_number = p_sale_number,\\par
+        image_link = COALESCE(p_image_link, image_link),\\par
+        category_id = p_category_id,\\par
+        updated_date = NOW()\\par
+    WHERE bar_code = p_bar_code\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_soft_delete $$\\par
+CREATE PROCEDURE sp_product_soft_delete(IN p_bar_code VARCHAR(50))\\par
+BEGIN\\par
+    UPDATE products\\par
+    SET is_deleted = TRUE,\\par
+        updated_date = NOW()\\par
+    WHERE bar_code = p_bar_code;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_add_image $$\\par
+CREATE PROCEDURE sp_product_add_image(\\par
+    IN p_product_id BIGINT,\\par
+    IN p_image_link VARCHAR(255),\\par
+    IN p_sort_order INT,\\par
+    IN p_is_primary BOOLEAN\\par
+)\\par
+BEGIN\\par
+    IF p_is_primary THEN\\par
+        UPDATE product_images\\par
+        SET is_primary = FALSE\\par
+        WHERE product_id = p_product_id;\\par
+    END IF;\\par
+\\par
+    INSERT INTO product_images(product_id, image_link, sort_order, is_primary)\\par
+    VALUES (p_product_id, p_image_link, COALESCE(p_sort_order, 1), COALESCE(p_is_primary, FALSE));\\par
+\\par
+    IF p_is_primary THEN\\par
+        UPDATE products\\par
+        SET image_link = p_image_link,\\par
+            updated_date = NOW()\\par
+        WHERE id = p_product_id;\\par
+    END IF;\\par
+\\par
+    SELECT LAST_INSERT_ID() AS product_image_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_adjust_stock $$\\par
+CREATE PROCEDURE sp_product_adjust_stock(\\par
+    IN p_product_id BIGINT,\\par
+    IN p_quantity_change INT,\\par
+    IN p_reference_type VARCHAR(30),\\par
+    IN p_reference_id BIGINT,\\par
+    IN p_note VARCHAR(255),\\par
+    IN p_created_by BIGINT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_new_quantity INT;\\par
+\\par
+    UPDATE products\\par
+    SET stock_quantity = stock_quantity + p_quantity_change,\\par
+        updated_date = NOW()\\par
+    WHERE id = p_product_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT stock_quantity INTO v_new_quantity\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO inventory_transactions(\\par
+        product_id, transaction_type, quantity_change, quantity_after,\\par
+        reference_type, reference_id, note, created_by\\par
+    ) VALUES (\\par
+        p_product_id,\\par
+        CASE\\par
+            WHEN p_quantity_change > 0 THEN 'ADJUST_IN'\\par
+            ELSE 'ADJUST_OUT'\\par
+        END,\\par
+        p_quantity_change,\\par
+        v_new_quantity,\\par
+        p_reference_type,\\par
+        p_reference_id,\\par
+        p_note,\\par
+        p_created_by\\par
+    );\\par
+\\par
+    SELECT v_new_quantity AS stock_quantity;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_product_increase_sale_number $$\\par
+CREATE PROCEDURE sp_product_increase_sale_number(\\par
+    IN p_product_id BIGINT,\\par
+    IN p_quantity INT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_quantity_after INT;\\par
+\\par
+    UPDATE products\\par
+    SET sale_number = sale_number + p_quantity,\\par
+        stock_quantity = stock_quantity - p_quantity,\\par
+        updated_date = NOW()\\par
+    WHERE id = p_product_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT stock_quantity INTO v_quantity_after\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO inventory_transactions(\\par
+        product_id, transaction_type, quantity_change, quantity_after,\\par
+        reference_type, reference_id, note, created_by\\par
+    ) VALUES (\\par
+        p_product_id,\\par
+        'SALE',\\par
+        -p_quantity,\\par
+        v_quantity_after,\\par
+        'PRODUCT',\\par
+        p_product_id,\\par
+        'Tang doanh so ban',\\par
+        NULL\\par
+    );\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_ensure_open $$\\par
+CREATE PROCEDURE sp_cart_ensure_open(IN p_staff_id BIGINT)\\par
+BEGIN\\par
+    DECLARE v_cart_id BIGINT;\\par
+\\par
+    SELECT id INTO v_cart_id\\par
+    FROM staff_carts\\par
+    WHERE sale_people_id = p_staff_id\\par
+      AND cart_status = 'OPEN'\\par
+    ORDER BY id DESC\\par
+    LIMIT 1;\\par
+\\par
+    IF v_cart_id IS NULL THEN\\par
+        INSERT INTO staff_carts(sale_people_id, cart_status)\\par
+        VALUES (p_staff_id, 'OPEN');\\par
+        SET v_cart_id = LAST_INSERT_ID();\\par
+    END IF;\\par
+\\par
+    SELECT v_cart_id AS cart_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_get_by_staff $$\\par
+CREATE PROCEDURE sp_cart_get_by_staff(IN p_staff_id BIGINT)\\par
+BEGIN\\par
+    SELECT sci.id,\\par
+           sc.sale_people_id,\\par
+           sci.product_id,\\par
+           sci.name,\\par
+           sci.image_link,\\par
+           sci.sale_price,\\par
+           sci.quantity,\\par
+           sci.total_money\\par
+    FROM staff_cart_items sci\\par
+    JOIN staff_carts sc ON sc.id = sci.cart_id\\par
+    WHERE sc.sale_people_id = p_staff_id\\par
+      AND sc.cart_status = 'OPEN'\\par
+    ORDER BY sci.id ASC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_add_item $$\\par
+CREATE PROCEDURE sp_cart_add_item(\\par
+    IN p_staff_id BIGINT,\\par
+    IN p_product_id BIGINT,\\par
+    IN p_quantity INT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_cart_id BIGINT;\\par
+    DECLARE v_item_id BIGINT;\\par
+    DECLARE v_name VARCHAR(200);\\par
+    DECLARE v_bar_code VARCHAR(50);\\par
+    DECLARE v_image_link VARCHAR(255);\\par
+    DECLARE v_price INT;\\par
+\\par
+    CALL sp_cart_ensure_open(p_staff_id);\\par
+\\par
+    SELECT id INTO v_cart_id\\par
+    FROM staff_carts\\par
+    WHERE sale_people_id = p_staff_id\\par
+      AND cart_status = 'OPEN'\\par
+    ORDER BY id DESC\\par
+    LIMIT 1;\\par
+\\par
+    SELECT name, bar_code, image_link, price_sale\\par
+    INTO v_name, v_bar_code, v_image_link, v_price\\par
+    FROM products\\par
+    WHERE id = p_product_id\\par
+      AND is_deleted = FALSE;\\par
+\\par
+    SELECT id INTO v_item_id\\par
+    FROM staff_cart_items\\par
+    WHERE cart_id = v_cart_id\\par
+      AND product_id = p_product_id\\par
+    LIMIT 1;\\par
+\\par
+    IF v_item_id IS NULL THEN\\par
+        INSERT INTO staff_cart_items(\\par
+            cart_id, product_id, name, bar_code, image_link, sale_price, quantity, total_money\\par
+        ) VALUES (\\par
+            v_cart_id, p_product_id, v_name, v_bar_code, v_image_link, v_price, p_quantity, v_price * p_quantity\\par
+        );\\par
+    ELSE\\par
+        UPDATE staff_cart_items\\par
+        SET quantity = quantity + p_quantity,\\par
+            total_money = (quantity + p_quantity) * sale_price,\\par
+            updated_at = NOW()\\par
+        WHERE id = v_item_id;\\par
+    END IF;\\par
+\\par
+    SELECT TRUE AS success;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_update_quantity $$\\par
+CREATE PROCEDURE sp_cart_update_quantity(\\par
+    IN p_cart_id BIGINT,\\par
+    IN p_quantity INT\\par
+)\\par
+BEGIN\\par
+    UPDATE staff_cart_items\\par
+    SET quantity = p_quantity,\\par
+        total_money = sale_price * p_quantity,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_cart_id;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_delete_item $$\\par
+CREATE PROCEDURE sp_cart_delete_item(IN p_cart_id BIGINT)\\par
+BEGIN\\par
+    DELETE FROM staff_cart_items\\par
+    WHERE id = p_cart_id;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_cart_clear_by_staff $$\\par
+CREATE PROCEDURE sp_cart_clear_by_staff(IN p_staff_id BIGINT)\\par
+BEGIN\\par
+    DELETE sci\\par
+    FROM staff_cart_items sci\\par
+    JOIN staff_carts sc ON sc.id = sci.cart_id\\par
+    WHERE sc.sale_people_id = p_staff_id\\par
+      AND sc.cart_status = 'OPEN';\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_customer_get_by_phone $$\\par
+CREATE PROCEDURE sp_customer_get_by_phone(IN p_phone_number VARCHAR(20))\\par
+BEGIN\\par
+    SELECT id,\\par
+           customer_code,\\par
+           phone_number,\\par
+           full_name,\\par
+           email,\\par
+           address,\\par
+           ward,\\par
+           district,\\par
+           city,\\par
+           note,\\par
+           loyalty_points,\\par
+           created_at\\par
+    FROM customers\\par
+    WHERE phone_number = p_phone_number\\par
+      AND is_deleted = FALSE\\par
+    LIMIT 1;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_customer_search $$\\par
+CREATE PROCEDURE sp_customer_search(IN p_keyword VARCHAR(150))\\par
+BEGIN\\par
+    SELECT id,\\par
+           customer_code,\\par
+           phone_number,\\par
+           full_name,\\par
+           email,\\par
+           address,\\par
+           ward,\\par
+           district,\\par
+           city,\\par
+           note,\\par
+           loyalty_points,\\par
+           created_at\\par
+    FROM customers\\par
+    WHERE is_deleted = FALSE\\par
+      AND (\\par
+          phone_number LIKE CONCAT('%', p_keyword, '%')\\par
+          OR full_name LIKE CONCAT('%', p_keyword, '%')\\par
+          OR COALESCE(email, '') LIKE CONCAT('%', p_keyword, '%')\\par
+      )\\par
+    ORDER BY created_at DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_customer_create_if_not_exists $$\\par
+CREATE PROCEDURE sp_customer_create_if_not_exists(\\par
+    IN p_phone_number VARCHAR(20),\\par
+    IN p_full_name VARCHAR(150),\\par
+    IN p_address VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    DECLARE v_customer_id BIGINT;\\par
+    DECLARE v_next_customer_no BIGINT;\\par
+\\par
+    SELECT id INTO v_customer_id\\par
+    FROM customers\\par
+    WHERE phone_number = p_phone_number\\par
+      AND is_deleted = FALSE\\par
+    LIMIT 1;\\par
+\\par
+    IF v_customer_id IS NULL THEN\\par
+        SELECT COALESCE(MAX(id), 0) + 1 INTO v_next_customer_no\\par
+        FROM customers;\\par
+\\par
+        INSERT INTO customers(customer_code, phone_number, full_name, address)\\par
+        VALUES (\\par
+            CONCAT('CUS', LPAD(v_next_customer_no, 4, '0')),\\par
+            p_phone_number,\\par
+            p_full_name,\\par
+            p_address\\par
+        );\\par
+        SET v_customer_id = LAST_INSERT_ID();\\par
+    ELSE\\par
+        UPDATE customers\\par
+        SET full_name = COALESCE(NULLIF(p_full_name, ''), full_name),\\par
+            address = COALESCE(NULLIF(p_address, ''), address),\\par
+            updated_at = NOW()\\par
+        WHERE id = v_customer_id;\\par
+    END IF;\\par
+\\par
+    SELECT v_customer_id AS customer_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_customer_purchase_history $$\\par
+CREATE PROCEDURE sp_customer_purchase_history(IN p_customer_id BIGINT)\\par
+BEGIN\\par
+    SELECT i.invoice_code,\\par
+           u.full_name AS sale_people,\\par
+           c.full_name AS customer_name,\\par
+           i.receive_money,\\par
+           i.excess_money,\\par
+           i.total_money,\\par
+           i.quantity,\\par
+           i.created_date\\par
+    FROM invoices i\\par
+    JOIN customers c ON c.id = i.customer_id\\par
+    JOIN users u ON u.id = i.user_id\\par
+    WHERE c.id = p_customer_id\\par
+    ORDER BY i.created_date DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_create $$\\par
+CREATE PROCEDURE sp_invoice_create(\\par
+    IN p_invoice_code VARCHAR(50),\\par
+    IN p_customer_id BIGINT,\\par
+    IN p_user_id BIGINT,\\par
+    IN p_receive_money INT,\\par
+    IN p_excess_money INT,\\par
+    IN p_total_money INT,\\par
+    IN p_quantity INT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_cart_id BIGINT;\\par
+\\par
+    SELECT id INTO v_cart_id\\par
+    FROM staff_carts\\par
+    WHERE sale_people_id = p_user_id\\par
+      AND cart_status = 'OPEN'\\par
+    ORDER BY id DESC\\par
+    LIMIT 1;\\par
+\\par
+    INSERT INTO invoices(\\par
+        invoice_code, customer_id, user_id, cart_id, sales_channel, invoice_status,\\par
+        payment_method, receive_money, excess_money, subtotal_money, total_money, quantity\\par
+    ) VALUES (\\par
+        p_invoice_code, p_customer_id, p_user_id, v_cart_id, 'POS', 'PAID',\\par
+        'CASH', p_receive_money, p_excess_money, p_total_money, p_total_money, p_quantity\\par
+    );\\par
+\\par
+    SELECT LAST_INSERT_ID() AS invoice_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_item_create $$\\par
+CREATE PROCEDURE sp_invoice_item_create(\\par
+    IN p_invoice_id BIGINT,\\par
+    IN p_product_id BIGINT,\\par
+    IN p_quantity INT,\\par
+    IN p_unit_price INT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_product_name VARCHAR(200);\\par
+    DECLARE v_bar_code VARCHAR(50);\\par
+    DECLARE v_quantity_after INT;\\par
+\\par
+    SELECT name, bar_code\\par
+    INTO v_product_name, v_bar_code\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO invoice_items(\\par
+        invoice_id, product_id, product_name, bar_code, quantity, unit_price, line_total\\par
+    ) VALUES (\\par
+        p_invoice_id, p_product_id, v_product_name, v_bar_code, p_quantity, p_unit_price, p_quantity * p_unit_price\\par
+    );\\par
+\\par
+    UPDATE products\\par
+    SET sale_number = sale_number + p_quantity,\\par
+        stock_quantity = stock_quantity - p_quantity,\\par
+        updated_date = NOW()\\par
+    WHERE id = p_product_id;\\par
+\\par
+    SELECT stock_quantity INTO v_quantity_after\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO inventory_transactions(\\par
+        product_id, transaction_type, quantity_change, quantity_after,\\par
+        reference_type, reference_id, note, created_by\\par
+    ) VALUES (\\par
+        p_product_id,\\par
+        'SALE',\\par
+        -p_quantity,\\par
+        v_quantity_after,\\par
+        'INVOICE',\\par
+        p_invoice_id,\\par
+        'Ban hang tai quay',\\par
+        NULL\\par
+    );\\par
+\\par
+    SELECT LAST_INSERT_ID() AS invoice_item_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_attach_pdf $$\\par
+CREATE PROCEDURE sp_invoice_attach_pdf(\\par
+    IN p_invoice_code VARCHAR(50),\\par
+    IN p_pdf_link VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    UPDATE invoices\\par
+    SET pdf_link = p_pdf_link,\\par
+        updated_date = NOW()\\par
+    WHERE invoice_code = p_invoice_code;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_get_detail $$\\par
+CREATE PROCEDURE sp_invoice_get_detail(IN p_invoice_code VARCHAR(50))\\par
+BEGIN\\par
+    SELECT i.invoice_code,\\par
+           ii.product_name,\\par
+           ii.quantity,\\par
+           ii.unit_price,\\par
+           ii.created_date\\par
+    FROM invoice_items ii\\par
+    JOIN invoices i ON i.id = ii.invoice_id\\par
+    WHERE i.invoice_code = p_invoice_code\\par
+    ORDER BY ii.id ASC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_get_all $$\\par
+CREATE PROCEDURE sp_invoice_get_all()\\par
+BEGIN\\par
+    SELECT i.id,\\par
+           i.invoice_code,\\par
+           c.full_name AS customer_name,\\par
+           u.full_name AS sale_people,\\par
+           i.total_money,\\par
+           i.quantity,\\par
+           i.invoice_status,\\par
+           i.pdf_link,\\par
+           i.created_date\\par
+    FROM invoices i\\par
+    JOIN customers c ON c.id = i.customer_id\\par
+    JOIN users u ON u.id = i.user_id\\par
+    ORDER BY i.created_date DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_invoice_complete_checkout $$\\par
+CREATE PROCEDURE sp_invoice_complete_checkout(IN p_staff_id BIGINT)\\par
+BEGIN\\par
+    UPDATE staff_carts\\par
+    SET cart_status = 'CHECKED_OUT',\\par
+        updated_at = NOW()\\par
+    WHERE sale_people_id = p_staff_id\\par
+      AND cart_status = 'OPEN';\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_create $$\\par
+CREATE PROCEDURE sp_order_create(\\par
+    IN p_order_code VARCHAR(50),\\par
+    IN p_customer_id BIGINT,\\par
+    IN p_subtotal_money INT,\\par
+    IN p_shipping_fee INT,\\par
+    IN p_discount_money INT,\\par
+    IN p_total_money INT,\\par
+    IN p_recipient_name VARCHAR(150),\\par
+    IN p_recipient_phone VARCHAR(20),\\par
+    IN p_shipping_address VARCHAR(255),\\par
+    IN p_note VARCHAR(255)\\par
+)\\par
+BEGIN\\par
+    INSERT INTO customer_orders(\\par
+        order_code, customer_id, subtotal_money, shipping_fee, discount_money, total_money,\\par
+        recipient_name, recipient_phone, shipping_address, note\\par
+    ) VALUES (\\par
+        p_order_code, p_customer_id, p_subtotal_money, p_shipping_fee, p_discount_money, p_total_money,\\par
+        p_recipient_name, p_recipient_phone, p_shipping_address, p_note\\par
+    );\\par
+\\par
+    SELECT LAST_INSERT_ID() AS order_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_add_item $$\\par
+CREATE PROCEDURE sp_order_add_item(\\par
+    IN p_order_id BIGINT,\\par
+    IN p_product_id BIGINT,\\par
+    IN p_quantity INT,\\par
+    IN p_unit_price INT\\par
+)\\par
+BEGIN\\par
+    DECLARE v_product_name VARCHAR(200);\\par
+    DECLARE v_bar_code VARCHAR(50);\\par
+    DECLARE v_quantity_after INT;\\par
+\\par
+    SELECT name, bar_code\\par
+    INTO v_product_name, v_bar_code\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO customer_order_items(\\par
+        order_id, product_id, product_name, bar_code, quantity, unit_price, line_total\\par
+    ) VALUES (\\par
+        p_order_id, p_product_id, v_product_name, v_bar_code, p_quantity, p_unit_price, p_quantity * p_unit_price\\par
+    );\\par
+\\par
+    UPDATE products\\par
+    SET stock_quantity = stock_quantity - p_quantity,\\par
+        updated_date = NOW()\\par
+    WHERE id = p_product_id;\\par
+\\par
+    SELECT stock_quantity INTO v_quantity_after\\par
+    FROM products\\par
+    WHERE id = p_product_id;\\par
+\\par
+    INSERT INTO inventory_transactions(\\par
+        product_id, transaction_type, quantity_change, quantity_after,\\par
+        reference_type, reference_id, note, created_by\\par
+    ) VALUES (\\par
+        p_product_id,\\par
+        'ORDER',\\par
+        -p_quantity,\\par
+        v_quantity_after,\\par
+        'ORDER',\\par
+        p_order_id,\\par
+        'Dat hang online',\\par
+        NULL\\par
+    );\\par
+\\par
+    SELECT LAST_INSERT_ID() AS order_item_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_update_status $$\\par
+CREATE PROCEDURE sp_order_update_status(\\par
+    IN p_order_id BIGINT,\\par
+    IN p_order_status VARCHAR(20),\\par
+    IN p_payment_status VARCHAR(20)\\par
+)\\par
+BEGIN\\par
+    UPDATE customer_orders\\par
+    SET order_status = p_order_status,\\par
+        payment_status = p_payment_status,\\par
+        updated_at = NOW()\\par
+    WHERE id = p_order_id;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_get_detail $$\\par
+CREATE PROCEDURE sp_order_get_detail(IN p_order_code VARCHAR(50))\\par
+BEGIN\\par
+    SELECT o.order_code,\\par
+           o.order_status,\\par
+           o.payment_status,\\par
+           o.total_money,\\par
+           o.shipping_address,\\par
+           oi.product_name,\\par
+           oi.quantity,\\par
+           oi.unit_price,\\par
+           oi.line_total,\\par
+           o.created_at\\par
+    FROM customer_orders o\\par
+    JOIN customer_order_items oi ON oi.order_id = o.id\\par
+    WHERE o.order_code = p_order_code\\par
+    ORDER BY oi.id ASC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_get_by_customer_phone $$\\par
+CREATE PROCEDURE sp_order_get_by_customer_phone(IN p_phone_number VARCHAR(20))\\par
+BEGIN\\par
+    SELECT o.id,\\par
+           o.order_code,\\par
+           c.full_name,\\par
+           o.order_status,\\par
+           o.payment_status,\\par
+           o.total_money,\\par
+           o.created_at\\par
+    FROM customer_orders o\\par
+    JOIN customers c ON c.id = o.customer_id\\par
+    WHERE c.phone_number = p_phone_number\\par
+    ORDER BY o.created_at DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_order_get_all $$\\par
+CREATE PROCEDURE sp_order_get_all()\\par
+BEGIN\\par
+    SELECT o.id,\\par
+           o.order_code,\\par
+           c.full_name AS customer_name,\\par
+           o.recipient_name,\\par
+           o.recipient_phone,\\par
+           o.order_status,\\par
+           o.payment_status,\\par
+           o.total_money,\\par
+           o.created_at\\par
+    FROM customer_orders o\\par
+    JOIN customers c ON c.id = o.customer_id\\par
+    ORDER BY o.created_at DESC, o.id DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_chat_session_create $$\\par
+CREATE PROCEDURE sp_chat_session_create(\\par
+    IN p_session_code VARCHAR(50),\\par
+    IN p_customer_id BIGINT,\\par
+    IN p_guest_name VARCHAR(150),\\par
+    IN p_channel_name VARCHAR(30)\\par
+)\\par
+BEGIN\\par
+    INSERT INTO chat_sessions(session_code, customer_id, guest_name, channel_name)\\par
+    VALUES (p_session_code, p_customer_id, p_guest_name, COALESCE(p_channel_name, 'AGENT_WEB'));\\par
+\\par
+    SELECT LAST_INSERT_ID() AS session_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_chat_session_resolve $$\\par
+CREATE PROCEDURE sp_chat_session_resolve(IN p_session_code VARCHAR(50))\\par
+BEGIN\\par
+    SELECT id\\par
+    FROM chat_sessions\\par
+    WHERE session_code = p_session_code\\par
+    LIMIT 1;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_chat_message_add $$\\par
+CREATE PROCEDURE sp_chat_message_add(\\par
+    IN p_session_id BIGINT,\\par
+    IN p_sender_type VARCHAR(20),\\par
+    IN p_message_text TEXT,\\par
+    IN p_prompt_tokens INT,\\par
+    IN p_completion_tokens INT\\par
+)\\par
+BEGIN\\par
+    INSERT INTO chat_messages(session_id, sender_type, message_text, prompt_tokens, completion_tokens)\\par
+    VALUES (\\par
+        p_session_id,\\par
+        p_sender_type,\\par
+        p_message_text,\\par
+        COALESCE(p_prompt_tokens, 0),\\par
+        COALESCE(p_completion_tokens, 0)\\par
+    );\\par
+\\par
+    UPDATE chat_sessions\\par
+    SET updated_at = NOW()\\par
+    WHERE id = p_session_id;\\par
+\\par
+    SELECT LAST_INSERT_ID() AS message_id;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_chat_session_get_messages $$\\par
+CREATE PROCEDURE sp_chat_session_get_messages(IN p_session_code VARCHAR(50))\\par
+BEGIN\\par
+    SELECT cs.session_code,\\par
+           cm.sender_type,\\par
+           cm.message_text,\\par
+           cm.prompt_tokens,\\par
+           cm.completion_tokens,\\par
+           cm.created_at\\par
+    FROM chat_sessions cs\\par
+    JOIN chat_messages cm ON cm.session_id = cs.id\\par
+    WHERE cs.session_code = p_session_code\\par
+    ORDER BY cm.id ASC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_chat_session_close $$\\par
+CREATE PROCEDURE sp_chat_session_close(IN p_session_code VARCHAR(50))\\par
+BEGIN\\par
+    UPDATE chat_sessions\\par
+    SET session_status = 'CLOSED',\\par
+        updated_at = NOW()\\par
+    WHERE session_code = p_session_code;\\par
+\\par
+    SELECT ROW_COUNT() AS affected_rows;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_statistical_summary $$\\par
+CREATE PROCEDURE sp_statistical_summary()\\par
+BEGIN\\par
+    SELECT COALESCE(SUM(total_money), 0) AS total_money,\\par
+           COALESCE(SUM(quantity), 0) AS total_quantity,\\par
+           COUNT(*) AS invoice_number\\par
+    FROM invoices\\par
+    WHERE invoice_status <> 'CANCELLED';\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_statistical_summary_with_users $$\\par
+CREATE PROCEDURE sp_statistical_summary_with_users()\\par
+BEGIN\\par
+    SELECT\\par
+        (SELECT COALESCE(SUM(total_money), 0) FROM invoices WHERE invoice_status <> 'CANCELLED') AS money,\\par
+        (SELECT COALESCE(SUM(quantity), 0) FROM invoices WHERE invoice_status <> 'CANCELLED') AS quantity,\\par
+        (SELECT COUNT(*) FROM invoices WHERE invoice_status <> 'CANCELLED') AS invoice_number,\\par
+        (\\par
+            SELECT COUNT(*)\\par
+            FROM users u\\par
+            JOIN user_role ur ON ur.user_id = u.id\\par
+            JOIN roles r ON r.id = ur.role_id\\par
+            WHERE r.role_code = 'STAFF'\\par
+              AND u.is_deleted = FALSE\\par
+        ) AS user_number;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_statistical_by_date $$\\par
+CREATE PROCEDURE sp_statistical_by_date(\\par
+    IN p_start_date DATETIME,\\par
+    IN p_end_date DATETIME\\par
+)\\par
+BEGIN\\par
+    SELECT i.invoice_code,\\par
+           u.full_name AS sale_people,\\par
+           c.full_name AS customer_name,\\par
+           i.receive_money,\\par
+           i.excess_money,\\par
+           i.total_money,\\par
+           i.quantity,\\par
+           i.created_date\\par
+    FROM invoices i\\par
+    JOIN customers c ON c.id = i.customer_id\\par
+    JOIN users u ON u.id = i.user_id\\par
+    WHERE i.created_date BETWEEN p_start_date AND p_end_date\\par
+      AND i.invoice_status <> 'CANCELLED'\\par
+    ORDER BY i.created_date DESC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_statistical_staff_revenue $$\\par
+CREATE PROCEDURE sp_statistical_staff_revenue()\\par
+BEGIN\\par
+    SELECT u.id AS user_id,\\par
+           u.full_name,\\par
+           COUNT(i.id) AS invoice_count,\\par
+           COALESCE(SUM(i.quantity), 0) AS total_quantity,\\par
+           COALESCE(SUM(i.total_money), 0) AS total_revenue\\par
+    FROM users u\\par
+    JOIN user_role ur ON ur.user_id = u.id\\par
+    JOIN roles r ON r.id = ur.role_id\\par
+    LEFT JOIN invoices i\\par
+        ON i.user_id = u.id\\par
+       AND i.invoice_status <> 'CANCELLED'\\par
+    WHERE r.role_code = 'STAFF'\\par
+      AND u.is_deleted = FALSE\\par
+    GROUP BY u.id, u.full_name\\par
+    ORDER BY total_revenue DESC, invoice_count DESC, u.full_name ASC;\\par
+END $$\\par
+\\par
+DROP PROCEDURE IF EXISTS sp_audit_log_add $$\\par
+CREATE PROCEDURE sp_audit_log_add(\\par
+    IN p_actor_user_id BIGINT,\\par
+    IN p_module_name VARCHAR(50),\\par
+    IN p_action_name VARCHAR(50),\\par
+    IN p_entity_name VARCHAR(50),\\par
+    IN p_entity_id BIGINT,\\par
+    IN p_payload_json JSON\\par
+)\\par
+BEGIN\\par
+    INSERT INTO audit_logs(actor_user_id, module_name, action_name, entity_name, entity_id, payload_json)\\par
+    VALUES (p_actor_user_id, p_module_name, p_action_name, p_entity_name, p_entity_id, p_payload_json);\\par
+\\par
+    SELECT LAST_INSERT_ID() AS audit_log_id;\\par
+END $$\\par
+\\par
+DELIMITER ;\\par
+\\par
+-- Suggested smoke tests\\par
+-- CALL sp_auth_login('admin');\\par
+-- CALL sp_user_get_all_staff();\\par
+-- CALL sp_product_get_all();\\par
+-- CALL sp_cart_add_item(2, 1, 1);\\par
+-- CALL sp_cart_get_by_staff(2);\\par
+-- CALL sp_customer_get_by_phone('0901111111');\\par
+-- CALL sp_statistical_summary_with_users();\\par
+}

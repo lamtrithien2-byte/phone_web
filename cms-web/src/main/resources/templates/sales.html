@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CMS Sales</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --line: #e5e7eb;
+            --ink: #172033;
+            --muted: #667085;
+            --brand: #163a5f;
+            --brand-soft: #edf4fb;
+            --accent: #ef6c00;
+            --ok: #166534;
+            --err: #a12626;
+            --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+            --radius-lg: 22px;
+            --radius-md: 16px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+        }
+        a { color: inherit; text-decoration: none; }
+        .page {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 28px 18px 40px;
+        }
+        .hero {
+            background: linear-gradient(135deg, #163a5f, #2f607f);
+            color: #fff;
+            border-radius: 28px;
+            padding: 26px 28px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow);
+        }
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+        }
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: 34px;
+        }
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+            color: rgba(255,255,255,0.86);
+            line-height: 1.6;
+        }
+        .hero-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .hero-nav a,
+        .hero-nav button {
+            padding: 11px 16px;
+            border-radius: 999px;
+            border: 0;
+            background: rgba(255,255,255,0.14);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .hero-nav .primary-link {
+            background: #fff;
+            color: var(--brand);
+        }
+        .message {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-weight: 700;
+        }
+        .ok { background: #e8f8ec; color: var(--ok); }
+        .err { background: #feeaea; color: var(--err); }
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.92fr);
+            gap: 20px;
+        }
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+        .card {
+            background: var(--panel);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+        .section-head h2,
+        .section-head h3 {
+            margin: 0;
+        }
+        .section-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: var(--brand-soft);
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .field-grid.single { grid-template-columns: 1fr; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+        }
+        input, button {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid #d4dbe4;
+            padding: 12px 14px;
+            font: inherit;
+        }
+        button {
+            border: 0;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .primary-btn {
+            background: var(--brand);
+            color: #fff;
+        }
+        .accent-btn {
+            background: var(--accent);
+            color: #fff;
+        }
+        .ghost-btn {
+            background: #eff4f8;
+            color: var(--brand);
+        }
+        .inline-actions {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .product-card {
+            border: 1px solid #edf1f5;
+            border-radius: 18px;
+            padding: 16px;
+            background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+        }
+        .product-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .price {
+            color: var(--accent);
+            font-size: 24px;
+            font-weight: 800;
+            margin: 10px 0;
+        }
+        .muted {
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .product-actions {
+            display: grid;
+            grid-template-columns: 92px 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .summary-box,
+        .history-item,
+        .detail-item {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: #fff;
+            border: 1px solid #edf1f5;
+        }
+        .summary-box strong,
+        .history-item strong,
+        .detail-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+        .totals {
+            display: grid;
+            gap: 10px;
+        }
+        .totals .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            color: var(--muted);
+        }
+        .totals .row.total {
+            color: var(--ink);
+            font-size: 20px;
+            font-weight: 800;
+        }
+        .history-list,
+        .detail-list {
+            display: grid;
+            gap: 12px;
+        }
+        .order-link {
+            display: block;
+            color: inherit;
+        }
+        .online-order-card {
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            cursor: pointer;
+        }
+        .online-order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+            border-color: #c9d8e6;
+        }
+        .online-order-card.active {
+            border: 2px solid #ef6c00;
+            background: #fff8f2;
+        }
+        .order-card-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #edf4fb;
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .inline-form {
+            margin-top: 12px;
+        }
+        .inline-form button {
+            width: auto;
+            min-width: 180px;
+        }
+        .empty {
+            padding: 16px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px dashed #d7dee7;
+            color: var(--muted);
+        }
+        .checkout-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        @media (max-width: 1080px) {
+            .layout,
+            .field-grid,
+            .checkout-actions {
+                grid-template-columns: 1fr;
+            }
+            .hero-top {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="hero">
+        <div class="hero-top">
+            <div>
+                <h1>Sales Workspace</h1>
+                <p>Man hinh POS da duoc gom lai theo dung luong ban hang: tim san pham, xem cart, tim khach theo so dien thoai, xem lich su mua hang, tao hoa don va xem chi tiet hoa don.</p>
+                <p th:if="${currentUser != null}" th:text="'Nhan vien dang thao tac: ' + ${currentUser.fullName()}"></p>
+            </div>
+        </div>
+        <div class="hero-nav">
+            <a class="primary-link" th:href="${salesUrl}">Ban hang</a>
+            <a th:href="${profileUrl}">Ho so</a>
+            <a th:if="${currentUser != null and #strings.equalsIgnoreCase(currentUser.roleName(), 'admin')}" th:href="${dashboardUrl}">Dashboard</a>
+            <a th:if="${currentUser != null and #strings.equalsIgnoreCase(currentUser.roleName(), 'admin')}" th:href="${employeesUrl}">Nhan vien</a>
+            <a th:href="${shopUrl}" target="_blank">Xem shop online</a>
+            <form method="post" action="/logout" style="display:inline;">
+                <button type="submit">Dang xuat</button>
+            </form>
+        </div>
+    </section>
+
+    <div th:if="${success}" class="message ok" th:text="${success}"></div>
+    <div th:if="${error}" class="message err" th:text="${error}"></div>
+
+    <section class="layout">
+        <div class="stack">
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Loc va tim</div>
+                        <h2>Tim san pham va khach hang</h2>
+                        <p>Nhap tu khoa de loc san pham. Nhap so dien thoai de nap thong tin khach va lich su mua hang.</p>
+                    </div>
+                </div>
+                <form method="get" action="/sales">
+                    <div class="field-grid">
+                        <div>
+                            <label for="keyword">Tu khoa san pham</label>
+                            <input id="keyword" type="text" name="keyword" th:value="${keyword}" placeholder="iPhone, Samsung, 256GB...">
+                        </div>
+                        <div>
+                            <label for="phoneNumberLookup">So dien thoai khach hang</label>
+                            <input id="phoneNumberLookup" type="text" name="phoneNumber" th:value="${phoneNumber}" placeholder="0901234567">
+                        </div>
+                    </div>
+                    <div class="field-grid single" style="margin-top:12px;">
+                        <div>
+                            <label for="invoiceCodeLookup">Ma hoa don can xem chi tiet</label>
+                            <input id="invoiceCodeLookup" type="text" name="invoiceCode" th:value="${invoiceCode}" placeholder="INV-...">
+                        </div>
+                    </div>
+                    <div class="field-grid single" style="margin-top:12px;">
+                        <div>
+                            <label for="onlineOrderCodeLookup">Ma don online can xu ly</label>
+                            <input id="onlineOrderCodeLookup" type="text" name="onlineOrderCode" th:value="${onlineOrderCode}" placeholder="ORD-...">
+                        </div>
+                    </div>
+                    <div class="checkout-actions">
+                        <button type="submit" class="primary-btn">Tai du lieu</button>
+                        <a class="ghost-btn" href="/sales" style="text-align:center; padding:12px 14px; border-radius:14px;">Lam moi</a>
+                    </div>
+                </form>
+            </section>
+
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Danh sach san pham</div>
+                        <h2>Chon san pham vao cart</h2>
+                    </div>
+                </div>
+                <div class="product-grid" th:if="${!#lists.isEmpty(products)}">
+                    <article class="product-card" th:each="product : ${products}">
+                        <div class="muted" th:text="${product.categoryName()}">Category</div>
+                        <strong th:text="${product.name()}">Product</strong>
+                        <div class="muted" th:text="'RAM ' + ${product.ram()} + ' | ROM ' + ${product.rom()}">Spec</div>
+                        <div class="price" th:text="${product.priceSale()} + ' VND'">0 VND</div>
+                        <form method="post" action="/sales/cart/add">
+                            <input type="hidden" name="keyword" th:value="${keyword}">
+                            <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+                            <input type="hidden" name="invoiceCode" th:value="${invoiceCode}">
+                            <input type="hidden" name="onlineOrderCode" th:value="${onlineOrderCode}">
+                            <input type="hidden" name="productId" th:value="${product.id()}">
+                            <div class="product-actions">
+                                <input type="number" name="quantity" min="1" value="1">
+                                <button type="submit" class="accent-btn">Them vao cart</button>
+                            </div>
+                        </form>
+                    </article>
+                </div>
+                <div class="empty" th:if="${#lists.isEmpty(products)}">
+                    Khong co san pham phu hop voi bo loc hien tai.
+                </div>
+            </section>
+        </div>
+
+        <div class="stack">
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Cart hien tai</div>
+                        <h3>Tom tat gio hang POS</h3>
+                    </div>
+                </div>
+                <div class="history-list" th:if="${cart != null && !#lists.isEmpty(cart.items())}">
+                    <article class="summary-box" th:each="item : ${cart.items()}">
+                        <strong th:text="${item.name()}">Product</strong>
+                        <div class="muted" th:text="'So luong: ' + ${item.quantity()}"></div>
+                        <div class="muted" th:text="'Thanh tien: ' + ${item.totalMoney()} + ' VND'"></div>
+                    </article>
+                </div>
+                <div class="empty" th:if="${cart == null || #lists.isEmpty(cart.items())}">
+                    Cart hien dang rong. Them san pham o danh sach ben trai.
+                </div>
+                <div class="totals" th:if="${cart != null}">
+                    <div class="row">
+                        <span>Tong so luong</span>
+                        <strong th:text="${cart.totalQuantity()}">0</strong>
+                    </div>
+                    <div class="row total">
+                        <span>Tong tien</span>
+                        <strong th:text="${cart.totalAmount()} + ' VND'">0 VND</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Khach hang va checkout</div>
+                        <h3>Tao hoa don nhanh</h3>
+                        <p>Neu tim thay khach theo so dien thoai, form se duoc dien san thong tin.</p>
+                    </div>
+                </div>
+
+                <div class="summary-box" th:if="${customer != null}" style="margin-bottom:14px;">
+                    <strong th:text="${customer.fullName()}">Customer</strong>
+                    <div class="muted" th:text="${customer.phoneNumber()}">Phone</div>
+                    <div class="muted" th:text="${customer.address()}">Address</div>
+                </div>
+
+                <form method="post" action="/sales/checkout">
+                    <input type="hidden" name="keyword" th:value="${keyword}">
+                    <input type="hidden" name="invoiceCode" th:value="${invoiceCode}">
+                    <input type="hidden" name="onlineOrderCode" th:value="${onlineOrderCode}">
+                    <div class="field-grid">
+                        <div>
+                            <label for="checkoutPhone">So dien thoai</label>
+                            <input id="checkoutPhone" type="text" name="phoneNumber" th:value="${customer != null ? customer.phoneNumber() : phoneNumber}" required>
+                        </div>
+                        <div>
+                            <label for="checkoutName">Ho ten</label>
+                            <input id="checkoutName" type="text" name="fullName" th:value="${customer != null ? customer.fullName() : ''}" required>
+                        </div>
+                    </div>
+                    <div class="field-grid single" style="margin-top:12px;">
+                        <div>
+                            <label for="checkoutAddress">Dia chi</label>
+                            <input id="checkoutAddress" type="text" name="address" th:value="${customer != null ? customer.address() : ''}">
+                        </div>
+                    </div>
+                    <div class="field-grid single" style="margin-top:12px;">
+                        <div>
+                            <label for="receiveMoney">Tien khach dua</label>
+                            <input id="receiveMoney" type="number" name="receiveMoney" th:value="${cart != null ? cart.totalAmount() : 0}" required>
+                        </div>
+                    </div>
+                    <div class="checkout-actions">
+                        <button type="submit" class="primary-btn">Tao hoa don</button>
+                        <a class="ghost-btn" th:href="${shopUrl}" target="_blank" style="text-align:center; padding:12px 14px; border-radius:14px;">Mo shop online</a>
+                    </div>
+                </form>
+
+                <div class="summary-box" th:if="${createdInvoice != null}" style="margin-top:14px;">
+                    <strong th:text="'Da tao hoa don ' + ${createdInvoice.invoiceCode()}">Invoice</strong>
+                    <div class="muted" th:text="'Khach hang ID: ' + ${createdInvoice.customerId()}"></div>
+                    <p th:if="${createdInvoice.pdfLink() != null}" style="margin:10px 0 0;">
+                        <a th:href="${'http://127.0.0.1:8081' + createdInvoice.pdfLink()}" target="_blank" style="color:#163a5f; font-weight:700;">Tai PDF hoa don</a>
+                    </p>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Don online</div>
+                        <h3>Xu ly don tu shop online</h3>
+                        <p>Don dat ben web user se hien o day de staff xem nguoi mua, mon hang va xac nhan thanh toan.</p>
+                    </div>
+                </div>
+
+                <div class="history-list" th:if="${!#lists.isEmpty(onlineOrders)}">
+                    <a class="order-link"
+                       th:each="order : ${onlineOrders}"
+                       th:href="@{/sales(keyword=${keyword}, phoneNumber=${phoneNumber}, invoiceCode=${invoiceCode}, onlineOrderCode=${order.orderCode()})}">
+                        <article class="history-item online-order-card"
+                                 th:classappend="${selectedOnlineOrder != null and selectedOnlineOrder.orderCode() == order.orderCode()} ? ' active' : ''">
+                            <div class="order-card-top">
+                                <div>
+                                    <strong th:text="${order.orderCode()}">ORD-...</strong>
+                                    <div class="muted" th:text="${order.recipientName()} + ' | ' + ${order.recipientPhone()}">Recipient</div>
+                                </div>
+                                <span class="status-pill" th:text="${order.paymentStatus()}">UNPAID</span>
+                            </div>
+                            <div class="muted" style="margin-top:8px;" th:text="${order.orderStatus()} + ' / ' + ${order.paymentStatus()}">Status</div>
+                            <div class="price" style="font-size:22px;" th:text="${order.totalMoney()} + ' VND'">0 VND</div>
+                            <div class="muted">Bam vao don de mo chi tiet va xu ly thanh toan.</div>
+                        </article>
+                    </a>
+                </div>
+                <div class="empty" th:if="${#lists.isEmpty(onlineOrders)}">
+                    Chua co don online nao can xu ly.
+                </div>
+
+                <div class="summary-box" th:if="${selectedOnlineOrder != null}" style="margin-top:14px;">
+                    <strong th:text="'Don dang xu ly: ' + ${selectedOnlineOrder.orderCode()}">Order</strong>
+                    <div class="muted" th:text="'Nguoi mua: ' + ${selectedOnlineOrder.recipientName()} + ' - ' + ${selectedOnlineOrder.recipientPhone()}"></div>
+                    <div class="muted" th:text="'Trang thai: ' + ${selectedOnlineOrder.orderStatus()} + ' / ' + ${selectedOnlineOrder.paymentStatus()}"></div>
+                    <div class="muted" th:text="'Tong tien: ' + ${selectedOnlineOrder.totalMoney()} + ' VND'"></div>
+                </div>
+
+                <div class="detail-list" th:if="${!#lists.isEmpty(onlineOrderDetails)}" style="margin-top:14px;">
+                    <article class="detail-item" th:each="detail : ${onlineOrderDetails}">
+                        <strong th:text="${detail.productName()}">Product</strong>
+                        <div class="muted" th:text="'So luong: ' + ${detail.quantity()} + ' | Don gia: ' + ${detail.unitPrice()} + ' VND'"></div>
+                        <div class="muted" th:text="'Dia chi: ' + ${detail.shippingAddress()}"></div>
+                        <div class="muted" th:text="'Trang thai: ' + ${detail.orderStatus()} + ' / ' + ${detail.paymentStatus()}"></div>
+                    </article>
+                </div>
+
+                <form th:if="${selectedOnlineOrder != null and !#strings.equalsIgnoreCase(selectedOnlineOrder.paymentStatus(), 'PAID')}"
+                      method="post" action="/sales/orders/pay" style="margin-top:14px;">
+                    <input type="hidden" name="orderId" th:value="${selectedOnlineOrder.id()}">
+                    <input type="hidden" name="orderCode" th:value="${selectedOnlineOrder.orderCode()}">
+                    <input type="hidden" name="keyword" th:value="${keyword}">
+                    <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+                    <input type="hidden" name="invoiceCode" th:value="${invoiceCode}">
+                    <div class="field-grid single">
+                        <div>
+                            <label for="onlineReceiveMoney">Tien khach dua cho don online</label>
+                            <input id="onlineReceiveMoney" type="number" name="receiveMoney" th:value="${selectedOnlineOrder.totalMoney()}" required>
+                        </div>
+                    </div>
+                    <div class="checkout-actions">
+                        <button type="submit" class="accent-btn">Xac nhan da thanh toan</button>
+                        <a class="ghost-btn"
+                           th:href="@{/sales(keyword=${keyword}, phoneNumber=${phoneNumber}, invoiceCode=${invoiceCode}, onlineOrderCode=${selectedOnlineOrder.orderCode()})}"
+                           style="text-align:center; padding:12px 14px; border-radius:14px;">Tai lai don</a>
+                    </div>
+                </form>
+                <div class="summary-box" th:if="${selectedOnlineOrder != null and #strings.equalsIgnoreCase(selectedOnlineOrder.paymentStatus(), 'PAID')}" style="margin-top:14px;">
+                    <strong>Don online da thanh toan</strong>
+                    <div class="muted">Trang thai tren web user se hien la PAID.</div>
+                </div>
+                <form class="inline-form"
+                      th:if="${selectedOnlineOrder != null and !#strings.equalsIgnoreCase(selectedOnlineOrder.paymentStatus(), 'PAID')}"
+                      method="post" action="/sales/orders/pay">
+                    <input type="hidden" name="orderId" th:value="${selectedOnlineOrder.id()}">
+                    <input type="hidden" name="orderCode" th:value="${selectedOnlineOrder.orderCode()}">
+                    <input type="hidden" name="keyword" th:value="${keyword}">
+                    <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+                    <input type="hidden" name="invoiceCode" th:value="${invoiceCode}">
+                    <input type="hidden" name="receiveMoney" th:value="${selectedOnlineOrder.totalMoney()}">
+                    <button type="submit" class="primary-btn">Thu tien don nay ngay</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Lich su mua hang</div>
+                        <h3>Don hang cua khach</h3>
+                    </div>
+                </div>
+                <div class="history-list" th:if="${!#lists.isEmpty(customerHistory)}">
+                    <article class="history-item" th:each="history : ${customerHistory}">
+                        <strong>
+                            <a th:href="@{/sales(keyword=${keyword}, phoneNumber=${phoneNumber}, invoiceCode=${history.invoiceCode()})}" th:text="${history.invoiceCode()}"></a>
+                        </strong>
+                        <div class="muted" th:text="'Nhan vien: ' + ${history.salesStaffName()}"></div>
+                        <div class="muted" th:text="'So luong: ' + ${history.quantity()} + ' | Tong tien: ' + ${history.totalMoney()} + ' VND'"></div>
+                        <div class="muted" th:text="'Tien dua: ' + ${history.receiveMoney()} + ' | Tien thua: ' + ${history.excessMoney()}"></div>
+                    </article>
+                </div>
+                <div class="empty" th:if="${#lists.isEmpty(customerHistory)}">
+                    Chua co lich su mua hang cho khach nay.
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="section-head">
+                    <div>
+                        <div class="tag">Chi tiet hoa don</div>
+                        <h3>San pham trong hoa don</h3>
+                    </div>
+                </div>
+                <div class="detail-list" th:if="${!#lists.isEmpty(invoiceDetails)}">
+                    <article class="detail-item" th:each="detail : ${invoiceDetails}">
+                        <strong th:text="${detail.productName()}">Product</strong>
+                        <div class="muted" th:text="'Hoa don: ' + ${detail.invoiceCode()}"></div>
+                        <div class="muted" th:text="'So luong: ' + ${detail.quantity()} + ' | Don gia: ' + ${detail.unitPrice()} + ' VND'"></div>
+                    </article>
+                </div>
+                <div class="empty" th:if="${#lists.isEmpty(invoiceDetails)}">
+                    Chua chon hoa don. Bam vao ma hoa don trong lich su mua hang de xem chi tiet.
+                </div>
+            </section>
+        </div>
+    </section>
+</div>
+</body>
+</html>

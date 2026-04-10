@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | Thanh Toan</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Thanh toan don hang</span>
+        <span><a th:href="@{/products/{id}(id=${product.id()})}">Quay lai san pham</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Checkout</span>
+            </div>
+        </a>
+        <div class="search-bar">
+            <input type="text" value="Xac nhan thong tin dat hang" readonly>
+            <a class="ghost-btn" th:href="@{/tracking}">Tra cuu don</a>
+        </div>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>Tong tien</strong>
+                <span th:text="${#numbers.formatInteger(grandTotal, 0, 'COMMA')} + ' VND'">0 VND</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">San pham</a>
+            <a class="nav-chip" th:href="@{/products/{id}(id=${product.id()})}">Chi tiet</a>
+            <a class="nav-chip" th:href="@{/tracking}">Theo doi don</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="checkout-layout">
+        <section class="checkout-form">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Thong tin nhan hang</div>
+                    <h1>Hoan tat dat hang</h1>
+                    <p>Nhap thong tin nguoi nhan, he thong se tao don ngay sau khi xac nhan.</p>
+                </div>
+            </div>
+
+            <form method="post" th:action="@{/checkout/confirm}">
+                <input type="hidden" name="productId" th:value="${product.id()}">
+                <input type="hidden" name="quantity" th:value="${quantity}">
+                <input type="hidden" name="shippingFee" value="0">
+
+                <div class="field-grid">
+                    <div>
+                        <label for="fullName">Ho ten</label>
+                        <input id="fullName" type="text" name="fullName" th:value="${fullName}" required>
+                    </div>
+                    <div>
+                        <label for="phoneNumber">So dien thoai</label>
+                        <input id="phoneNumber" type="text" name="phoneNumber" th:value="${phoneNumber}" required>
+                    </div>
+                </div>
+
+                <div class="field-grid single">
+                    <div>
+                        <label for="shippingAddress">Dia chi giao hang</label>
+                        <input id="shippingAddress" type="text" name="shippingAddress" th:value="${shippingAddress}" required>
+                    </div>
+                </div>
+
+                <div class="field-grid single">
+                    <div>
+                        <label for="note">Ghi chu</label>
+                        <input id="note" type="text" name="note" th:value="${note}" placeholder="Giao gio hanh chinh, goi truoc...">
+                    </div>
+                </div>
+
+                <div class="button-row" style="margin-top:14px;">
+                    <a class="ghost-btn" th:href="@{/products/{id}(id=${product.id()})}">Quay lai</a>
+                    <button type="submit" class="primary-btn">Xac nhan dat hang</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="checkout-summary">
+            <div class="mini-tag">Don hang cua ban</div>
+            <h2 class="product-title" th:text="${product.name()}">San pham</h2>
+            <div class="muted" th:text="${product.categoryName()}">Danh muc</div>
+            <div class="muted" th:text="'RAM ' + ${product.ram()} + ' | ROM ' + ${product.rom()}">Thong so</div>
+
+            <div class="summary-list" style="margin-top:16px;">
+                <div class="summary-box">
+                    <div class="summary-line" th:text="'So luong: ' + ${quantity}">So luong</div>
+                    <div class="summary-line" th:text="'Gia san pham: ' + ${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">Gia</div>
+                    <div class="summary-line" th:text="'Tam tinh: ' + ${#numbers.formatInteger(subtotal, 0, 'COMMA')} + ' VND'">Tam tinh</div>
+                    <div class="price" style="margin-top:10px;" th:text="${#numbers.formatInteger(grandTotal, 0, 'COMMA')} + ' VND'">Tong tien</div>
+                </div>
+
+                <div class="summary-box" th:if="${createdOrder != null}">
+                    <strong>Dat hang thanh cong</strong>
+                    <div class="summary-line" th:text="'Ma don: ' + ${createdOrder.orderCode()}">Ma don</div>
+                    <div class="summary-line" th:text="'Tong tien: ' + ${#numbers.formatInteger(createdOrder.totalMoney(), 0, 'COMMA')} + ' VND'">Tong tien</div>
+                    <div class="button-row" style="margin-top:12px;">
+                        <a class="ghost-btn" th:href="@{/tracking(phoneNumber=${phoneNumber},orderCode=${createdOrder.orderCode()})}">Theo doi don</a>
+                        <a class="primary-btn" th:href="@{/products}">Mua tiep</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </section>
+</main>
+</body>
+</html>

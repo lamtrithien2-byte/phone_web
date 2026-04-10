@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CMS Login</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #f4f1e8, #d7e6f1);
+            color: #1d2a34;
+        }
+        .layout {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+        .card {
+            width: min(420px, 100%);
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 18px 50px rgba(29, 42, 52, 0.12);
+        }
+        h1 {
+            margin: 0 0 8px;
+        }
+        p {
+            margin: 0 0 24px;
+            color: #58656f;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #cfd8df;
+            margin-bottom: 16px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        button {
+            border: 0;
+            background: #153b50;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .error {
+            background: #ffe8e8;
+            color: #a12626;
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <form class="card" method="post" action="/login">
+        <h1>CMS Web</h1>
+        <p>Admin va staff dang nhap thong qua Core API.</p>
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <label for="role">Vai tro</label>
+        <select id="role" name="role" required>
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+        </select>
+        <label for="username">Tai khoan</label>
+        <input id="username" name="username" required>
+        <label for="password">Mat khau</label>
+        <input id="password" type="password" name="password" required>
+        <button type="submit">Dang nhap qua Core API</button>
+        <p><a href="/forgot-password">Quen mat khau?</a></p>
+    </form>
+</div>
+</body>
+</html>

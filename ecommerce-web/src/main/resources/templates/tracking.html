@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | Theo Doi Don</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Theo doi don hang online</span>
+        <span><a th:href="@{/products}">Quay lai gian hang</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Theo doi don</span>
+            </div>
+        </a>
+        <div class="search-bar">
+            <input type="text" value="Tra cuu theo so dien thoai va ma don" readonly>
+            <a class="ghost-btn" th:href="@{/products}">Ve trang san pham</a>
+        </div>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>Ho tro</strong>
+                <span>Nhap dung so dien thoai da dat hang</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">San pham</a>
+            <a class="nav-chip" th:href="@{/tracking}">Theo doi don</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="tracking-layout">
+        <section class="track-card">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Tra cuu</div>
+                    <h1>Kiem tra tinh trang don hang</h1>
+                    <p>Nhap so dien thoai de xem danh sach don, sau do bam vao ma don de xem chi tiet.</p>
+                </div>
+            </div>
+            <form method="get" th:action="@{/tracking}">
+                <div class="field-grid">
+                    <div>
+                        <label for="phoneNumber">So dien thoai</label>
+                        <input id="phoneNumber" type="text" name="phoneNumber" th:value="${phoneNumber}" placeholder="0901234567">
+                    </div>
+                    <div>
+                        <label for="orderCode">Ma don</label>
+                        <input id="orderCode" type="text" name="orderCode" th:value="${orderCode}" placeholder="ORD-...">
+                    </div>
+                </div>
+                <div class="button-row" style="margin-top:14px;">
+                    <a class="ghost-btn" th:href="@{/products}">Quay lai</a>
+                    <button type="submit" class="primary-btn">Tra cuu</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="summary-card">
+            <div class="mini-tag">Thong tin</div>
+            <h3 style="margin:10px 0 6px;">Cach xem don nhanh</h3>
+            <div class="summary-line">1. Nhap so dien thoai da dung khi dat hang.</div>
+            <div class="summary-line">2. Chon ma don muon xem.</div>
+            <div class="summary-line">3. Theo doi trang thai thanh toan va giao hang.</div>
+        </aside>
+    </section>
+
+    <section class="layout-main" style="margin-top:18px; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);">
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Danh sach don</div>
+                    <h2>Don hang cua ban</h2>
+                </div>
+            </div>
+
+            <div class="history-list" th:if="${!#lists.isEmpty(orders)}">
+                <article class="history-card" th:each="order : ${orders}">
+                    <strong>
+                        <a th:href="@{/tracking(phoneNumber=${phoneNumber},orderCode=${order.orderCode()})}"
+                           th:text="${order.orderCode()}">Ma don</a>
+                    </strong>
+                    <div class="muted" th:text="${order.customerName()}">Khach hang</div>
+                    <div class="muted" th:text="${order.orderStatus()} + ' / ' + ${order.paymentStatus()}">Trang thai</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(order.totalMoney(), 0, 'COMMA')} + ' VND'">0 VND</div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(orders)}">
+                Chua co du lieu don hang. Vui long nhap so dien thoai de tra cuu.
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Chi tiet</div>
+                    <h2>San pham trong don</h2>
+                </div>
+            </div>
+
+            <div class="detail-list" th:if="${!#lists.isEmpty(orderDetails)}">
+                <article class="detail-card" th:each="detail : ${orderDetails}">
+                    <strong th:text="${detail.productName()}">San pham</strong>
+                    <div class="muted" th:text="'Ma don: ' + ${detail.orderCode()}">Ma don</div>
+                    <div class="muted" th:text="'Trang thai: ' + ${detail.orderStatus()} + ' / ' + ${detail.paymentStatus()}">Trang thai</div>
+                    <div class="muted" th:text="'So luong: ' + ${detail.quantity()}">So luong</div>
+                    <div class="muted" th:text="'Don gia: ' + ${#numbers.formatInteger(detail.unitPrice(), 0, 'COMMA')} + ' VND'">Don gia</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(detail.lineTotal(), 0, 'COMMA')} + ' VND'">Thanh tien</div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(orderDetails)}">
+                Chua chon ma don nao. Bam vao ma don trong danh sach ben trai de xem chi tiet.
+            </div>
+        </section>
+    </section>
+</main>
+</body>
+</html>
