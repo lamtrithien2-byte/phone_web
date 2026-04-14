@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | Tra c&#7913;u &#273;&#417;n</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Tra c&#7913;u &#273;&#417;n mua</span>
+        <span><a th:href="@{/products}">Quay l&#7841;i gian h&#224;ng</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Tra c&#7913;u &#273;&#417;n mua</span>
+            </div>
+        </a>
+        <div class="search-bar">
+            <input type="text" value="Nh&#7853;p s&#7889; &#273;i&#7879;n tho&#7841;i &#273;&#7875; xem danh s&#225;ch &#273;&#417;n mua" readonly>
+            <a class="ghost-btn" th:href="@{/products}">V&#7873; trang s&#7843;n ph&#7849;m</a>
+        </div>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>H&#7895; tr&#7907;</strong>
+                <span>D&#249;ng &#273;&#250;ng s&#7889; &#273;i&#7879;n tho&#7841;i khi &#273;&#7863;t mua</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">S&#7843;n ph&#7849;m</a>
+            <a class="nav-chip" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="tracking-layout">
+        <section class="track-card">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Tra c&#7913;u</div>
+                    <h1>Ki&#7875;m tra t&#236;nh tr&#7841;ng &#273;&#417;n mua</h1>
+                    <p>Nh&#7853;p s&#7889; &#273;i&#7879;n tho&#7841;i &#273;&#7875; xem danh s&#225;ch &#273;&#417;n, sau &#273;&#243; b&#7845;m v&#224;o &#273;&#417;n trong danh s&#225;ch &#273;&#7875; xem chi ti&#7871;t.</p>
+                </div>
+            </div>
+            <form method="get" th:action="@{/tracking}">
+                <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                <input type="hidden" name="chatGuestName" th:value="${chatGuestName}">
+                <div class="field-grid">
+                    <div>
+                        <label for="phoneNumber">S&#7889; &#273;i&#7879;n tho&#7841;i</label>
+                        <input id="phoneNumber" type="text" name="phoneNumber" th:value="${phoneNumber}" placeholder="0901234567">
+                    </div>
+                </div>
+                <div class="button-row" style="margin-top:14px;">
+                    <a class="ghost-btn" th:href="@{/products}">Quay l&#7841;i</a>
+                    <button type="submit" class="primary-btn">Tra c&#7913;u</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="summary-card">
+            <div class="mini-tag">H&#432;&#7899;ng d&#7851;n</div>
+            <h3 style="margin:10px 0 6px;">C&#225;ch xem &#273;&#417;n nhanh</h3>
+            <div class="summary-line">1. Nh&#7853;p s&#7889; &#273;i&#7879;n tho&#7841;i &#273;&#227; d&#249;ng khi &#273;&#7863;t h&#224;ng.</div>
+            <div class="summary-line">2. Ch&#7885;n &#273;&#417;n mu&#7889;n xem trong danh s&#225;ch.</div>
+            <div class="summary-line">3. Xem tr&#7841;ng th&#225;i thanh to&#225;n v&#224; giao h&#224;ng.</div>
+        </aside>
+    </section>
+
+    <section class="layout-main" style="margin-top:18px; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);">
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Danh s&#225;ch &#273;&#417;n</div>
+                    <h2>&#272;&#417;n h&#224;ng c&#7911;a b&#7841;n</h2>
+                </div>
+            </div>
+
+            <div class="history-list" th:if="${!#lists.isEmpty(orders)}">
+                <article class="history-card" th:each="order : ${orders}">
+                    <strong>
+                        <a th:href="@{/tracking(phoneNumber=${phoneNumber},orderCode=${order.code()},chatSessionCode=${chatSessionCode},chatGuestName=${chatGuestName})}"
+                           th:text="${'&#272;&#417;n ng&#224;y ' + #dates.format(order.createdAt(), 'dd/MM/yyyy HH:mm')}">&#272;&#417;n h&#224;ng</a>
+                    </strong>
+                    <div class="muted" th:text="${order.customerName()}">Kh&#225;ch h&#224;ng</div>
+                    <div class="muted" th:text="'Ngu&#7891;n: ' + ${order.source()} + (${order.salesStaffName() != null ? ' | Nh&#226;n vi&#234;n: ' + order.salesStaffName() : ''})">Ngu&#7891;n</div>
+                    <div class="muted" th:text="${order.orderStatus()} + ' / ' + ${order.paymentStatus()}">Tr&#7841;ng th&#225;i</div>
+                    <div class="muted" th:if="${!#lists.isEmpty(orderDetails) and selectedRecord != null and selectedRecord.code() == order.code() and orderDetails[0].voucherCode() != null}" th:text="'Voucher: ' + ${orderDetails[0].voucherCode()} + ' | Gi&#7843;m: ' + ${#numbers.formatInteger(orderDetails[0].discountMoney(), 0, 'COMMA')} + ' VND'">Voucher</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(order.totalMoney(), 0, 'COMMA')} + ' VND'">0 VND</div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(orders)}">
+                Ch&#432;a c&#243; d&#7919; li&#7879;u &#273;&#417;n h&#224;ng. Vui l&#242;ng nh&#7853;p s&#7889; &#273;i&#7879;n tho&#7841;i &#273;&#7875; tra c&#7913;u.
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Chi ti&#7871;t</div>
+                    <h2>S&#7843;n ph&#7849;m trong &#273;&#417;n</h2>
+                </div>
+            </div>
+
+            <div class="detail-list" th:if="${selectedRecord != null}">
+                <article class="detail-card">
+                    <strong th:text="${selectedRecord.customerName()}">Kh&#225;ch h&#224;ng</strong>
+                    <div class="muted" th:text="'Ngu&#7891;n: ' + ${selectedRecord.source()}">Ngu&#7891;n</div>
+                    <div class="muted" th:text="'Tr&#7841;ng th&#225;i: ' + ${selectedRecord.orderStatus()} + ' / ' + ${selectedRecord.paymentStatus()}">Tr&#7841;ng th&#225;i</div>
+                    <div class="muted" th:if="${selectedRecord.salesStaffName() != null}" th:text="'Nh&#226;n vi&#234;n b&#225;n: ' + ${selectedRecord.salesStaffName()}">Nh&#226;n vi&#234;n b&#225;n</div>
+                    <div class="muted" th:if="${!#lists.isEmpty(orderDetails) and orderDetails[0].voucherCode() != null}" th:text="'Voucher &#273;&#227; &#225;p d&#7909;ng: ' + ${orderDetails[0].voucherCode()} + ' | Gi&#7843;m: ' + ${#numbers.formatInteger(orderDetails[0].discountMoney(), 0, 'COMMA')} + ' VND'">Voucher</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(selectedRecord.totalMoney(), 0, 'COMMA')} + ' VND'">T&#7893;ng ti&#7873;n</div>
+                </article>
+            </div>
+
+            <div class="detail-list" th:if="${!#lists.isEmpty(orderDetails)}">
+                <article class="detail-card" th:each="detail : ${orderDetails}">
+                    <strong th:text="${detail.productName()}">S&#7843;n ph&#7849;m</strong>
+                    <div class="muted" th:text="'Tr&#7841;ng th&#225;i: ' + ${detail.orderStatus()} + ' / ' + ${detail.paymentStatus()}">Tr&#7841;ng th&#225;i</div>
+                    <div class="muted" th:if="${detail.voucherCode() != null}" th:text="'Voucher: ' + ${detail.voucherCode()} + ' | Gi&#7843;m &#273;&#417;n: ' + ${#numbers.formatInteger(detail.discountMoney(), 0, 'COMMA')} + ' VND'">Voucher</div>
+                    <div class="muted" th:text="'S&#7889; l&#432;&#7907;ng: ' + ${detail.quantity()}">S&#7889; l&#432;&#7907;ng</div>
+                    <div class="muted" th:text="'&#272;&#417;n gi&#225;: ' + ${#numbers.formatInteger(detail.unitPrice(), 0, 'COMMA')} + ' VND'">&#272;&#417;n gi&#225;</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(detail.lineTotal(), 0, 'COMMA')} + ' VND'">Th&#224;nh ti&#7873;n</div>
+                </article>
+            </div>
+
+            <div class="detail-list" th:if="${!#lists.isEmpty(invoiceDetails)}">
+                <article class="detail-card" th:each="detail : ${invoiceDetails}">
+                    <strong th:text="${detail.productName()}">S&#7843;n ph&#7849;m</strong>
+                    <div class="muted" th:text="'S&#7889; l&#432;&#7907;ng: ' + ${detail.quantity()}">S&#7889; l&#432;&#7907;ng</div>
+                    <div class="muted" th:text="'&#272;&#417;n gi&#225;: ' + ${#numbers.formatInteger(detail.unitPrice(), 0, 'COMMA')} + ' VND'">&#272;&#417;n gi&#225;</div>
+                    <div class="price" style="font-size:22px;" th:text="${#numbers.formatInteger(detail.unitPrice() * detail.quantity(), 0, 'COMMA')} + ' VND'">Th&#224;nh ti&#7873;n</div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${selectedRecord == null and #lists.isEmpty(orderDetails) and #lists.isEmpty(invoiceDetails)}">
+                Ch&#432;a ch&#7885;n &#273;&#417;n n&#224;o. B&#7845;m v&#224;o &#273;&#417;n trong danh s&#225;ch b&#234;n tr&#225;i &#273;&#7875; xem chi ti&#7871;t.
+            </div>
+        </section>
+    </section>
+
+    <div class="chat-widget">
+        <input class="chat-widget-toggle" type="checkbox" id="chatWidgetToggle" th:checked="${chatOpen}">
+        <div class="chat-widget-panel">
+            <div class="chat-widget-header">
+                <strong>T&#432; v&#7845;n s&#7843;n ph&#7849;m</strong>
+            </div>
+            <div class="chat-widget-body">
+                <div class="chat-feed" th:if="${chatHistory != null and !#lists.isEmpty(chatHistory.history())}">
+                    <div th:each="message : ${chatHistory.history()}"
+                         th:class="'bubble ' + ${#strings.equalsIgnoreCase(message.senderType(), 'AI') ? 'ai' : 'user'}">
+                        <div th:text="${message.messageText()}"></div>
+                    </div>
+                </div>
+                <div class="chat-feed" th:if="${chatHistory == null or #lists.isEmpty(chatHistory.history())}">
+                    <div class="bubble ai">Ch&#224;o b&#7841;n, b&#7841;n c&#7847;n t&#236;m s&#7843;n ph&#7849;m nh&#432; th&#7871; n&#224;o?</div>
+                </div>
+                <form class="chat-compose" method="post" th:action="@{/agent/chat}">
+                    <input type="hidden" name="returnPage" value="tracking">
+                    <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+                    <input type="hidden" name="orderCode" th:value="${orderCode}">
+                    <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                    <input type="hidden" name="chatGuestName" th:value="${#strings.isEmpty(chatGuestName) ? 'Kh&#225;ch h&#224;ng' : chatGuestName}">
+                    <div class="chat-compose-row">
+                        <input id="chatMessageTracking" type="text" name="chatMessage" placeholder="Nh&#7855;n &#273;&#7875; t&#236;m s&#7843;n ph&#7849;m ph&#249; h&#7907;p">
+                        <button type="submit" class="primary-btn">G&#7917;i</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <label class="chat-widget-button" for="chatWidgetToggle">Chat</label>
+    </div>
+</main>
+</body>
+</html>

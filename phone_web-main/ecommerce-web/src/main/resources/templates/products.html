@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | S&#7843;n ph&#7849;m</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>&#272;i&#7879;n tho&#7841;i ch&#237;nh h&#227;ng, gi&#225; r&#245; r&#224;ng, mua nhanh t&#7841;i nh&#224;</span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Mua s&#7855;m tr&#7921;c tuy&#7871;n</span>
+            </div>
+        </a>
+        <form class="search-bar" method="get" th:action="@{/products}">
+            <input type="text" name="keyword" th:value="${keyword}" placeholder="T&#236;m theo t&#234;n s&#7843;n ph&#7849;m, h&#227;ng, d&#242;ng m&#225;y">
+            <input type="hidden" name="sort" th:value="${selectedSort}">
+            <input type="hidden" name="minPrice" th:value="${minPrice}">
+            <input type="hidden" name="maxPrice" th:value="${maxPrice}">
+            <button type="submit" class="primary-btn">T&#236;m ki&#7871;m</button>
+        </form>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>Hotline</strong>
+                <span>1900 0000</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">T&#7845;t c&#7843; s&#7843;n ph&#7849;m</a>
+            <a class="nav-chip" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="hero-simple">
+        <section class="hero-banner">
+            <div class="eyebrow">Gian h&#224;ng &#273;i&#7879;n tho&#7841;i</div>
+            <h1>Ch&#7885;n m&#225;y ph&#249; h&#7907;p, xem gi&#225; r&#245; r&#224;ng v&#224; &#273;&#7863;t mua th&#7853;t nhanh.</h1>
+            <p>B&#7841;n c&#243; th&#7875; t&#236;m theo t&#234;n m&#225;y, l&#7885;c theo gi&#225;, s&#7855;p x&#7871;p l&#7841;i danh s&#225;ch v&#224; v&#224;o trang chi ti&#7871;t &#273;&#7875; xem th&#234;m.</p>
+        </section>
+        <div class="hero-side-stack">
+            <article class="hero-side-card">
+                <div class="mini-tag">Nh&#243;m n&#7893;i b&#7853;t</div>
+                <h3>iPhone, Samsung v&#224; nhi&#7873;u l&#7921;a ch&#7885;n kh&#225;c</h3>
+                <p>D&#249;ng thanh t&#236;m ki&#7871;m &#273;&#7875; r&#250;t g&#7885;n danh s&#225;ch &#273;&#250;ng v&#7899;i m&#225;y b&#7841;n &#273;ang c&#7847;n.</p>
+            </article>
+            <article class="hero-side-card">
+                <div class="mini-tag">Tra c&#7913;u d&#7877; d&#224;ng</div>
+                <h3>Xem l&#7841;i &#273;&#417;n theo s&#7889; &#273;i&#7879;n tho&#7841;i</h3>
+                <p>Sau khi &#273;&#7863;t mua, b&#7841;n ch&#7881; c&#7847;n nh&#7853;p s&#7889; &#273;i&#7879;n tho&#7841;i &#273;&#7875; ki&#7875;m tra danh s&#225;ch &#273;&#417;n v&#224; chi ti&#7871;t t&#7915;ng &#273;&#417;n.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="layout-main">
+        <aside class="filter-panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">B&#7897; l&#7885;c</div>
+                    <h3>L&#7885;c s&#7843;n ph&#7849;m</h3>
+                </div>
+            </div>
+            <form method="get" th:action="@{/products}">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <div class="filter-group">
+                    <label for="sortFilter">S&#7855;p x&#7871;p</label>
+                    <select id="sortFilter" name="sort">
+                        <option value="" th:selected="${selectedSort == ''}">M&#7863;c &#273;&#7883;nh</option>
+                        <option value="newest" th:selected="${selectedSort == 'newest'}">M&#7899;i c&#7853;p nh&#7853;t</option>
+                        <option value="best_selling" th:selected="${selectedSort == 'best_selling'}">&#272;&#432;&#7907;c mua nhi&#7873;u</option>
+                        <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Gi&#225; th&#7845;p &#273;&#7871;n cao</option>
+                        <option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Gi&#225; cao &#273;&#7871;n th&#7845;p</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="minPrice">Gi&#225; t&#7915;</label>
+                    <input id="minPrice" type="number" name="minPrice" min="0" th:value="${minPrice}" placeholder="0">
+                </div>
+
+                <div class="filter-group">
+                    <label for="maxPrice">Gi&#225; &#273;&#7871;n</label>
+                    <input id="maxPrice" type="number" name="maxPrice" min="0" th:value="${maxPrice}" placeholder="50000000">
+                </div>
+
+                <div class="button-row">
+                    <a class="ghost-btn" th:href="@{/products}">L&#224;m m&#7899;i</a>
+                    <button type="submit" class="primary-btn">&#193;p d&#7909;ng</button>
+                </div>
+            </form>
+        </aside>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">S&#7843;n ph&#7849;m</div>
+                    <h2>Danh s&#225;ch &#273;ang c&#243;</h2>
+                    <p th:text="${#lists.size(products)} + ' s&#7843;n ph&#7849;m ph&#249; h&#7907;p v&#7899;i l&#7921;a ch&#7885;n hi&#7879;n t&#7841;i.'">0 s&#7843;n ph&#7849;m</p>
+                </div>
+            </div>
+
+            <div class="product-grid" th:if="${!#lists.isEmpty(products)}">
+                <article class="product-card" th:each="product : ${products}">
+                    <div class="product-media">
+                        <img th:if="${product.imageLink() != null and !#strings.isEmpty(product.imageLink())}"
+                             th:src="${product.imageLink()}"
+                             th:alt="${product.name()}">
+                        <div class="media-fallback" th:if="${product.imageLink() == null or #strings.isEmpty(product.imageLink())}">
+                            <span th:text="${product.name()}">&#272;i&#7879;n tho&#7841;i</span>
+                        </div>
+                    </div>
+                    <div class="product-body">
+                        <div class="status-tag" th:text="${product.categoryName()}">Danh m&#7909;c</div>
+                        <h3 class="product-title" th:text="${product.name()}">T&#234;n s&#7843;n ph&#7849;m</h3>
+                        <div class="muted" th:text="'RAM ' + ${product.ram()} + ' | B&#7897; nh&#7899; ' + ${product.rom()}">C&#7845;u h&#236;nh</div>
+                        <div class="price" th:text="${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">0 VND</div>
+                        <div class="actions-row">
+                            <a class="ghost-btn" th:href="@{/products/{id}(id=${product.id()},chatSessionCode=${chatSessionCode},chatGuestName=${chatGuestName})}">Xem chi ti&#7871;t</a>
+                            <form method="post" th:action="@{/checkout}">
+                                <input type="hidden" name="productId" th:value="${product.id()}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="primary-btn" style="width:100%;">&#272;&#7863;t mua ngay</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(products)}">
+                Kh&#244;ng t&#236;m th&#7845;y s&#7843;n ph&#7849;m ph&#249; h&#7907;p. B&#7841;n h&#227;y th&#7917; &#273;&#7893;i t&#7915; kh&#243;a, kho&#7843;ng gi&#225; ho&#7863;c c&#225;ch s&#7855;p x&#7871;p.
+            </div>
+        </section>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <article class="footer-card">
+                <h4>Phone Store</h4>
+                <p>Trang b&#225;n h&#224;ng &#273;i&#7879;n tho&#7841;i ch&#237;nh h&#227;ng v&#7899;i lu&#7891;ng &#273;&#7863;t mua g&#7885;n g&#224;ng.</p>
+            </article>
+            <article class="footer-card">
+                <h4>S&#7843;n ph&#7849;m</h4>
+                <p>Danh s&#225;ch r&#245; r&#224;ng, b&#7897; l&#7885;c &#273;&#417;n gi&#7843;n, t&#236;m ki&#7871;m tr&#7921;c ti&#7871;p theo t&#234;n m&#225;y.</p>
+            </article>
+            <article class="footer-card">
+                <h4>Thanh to&#225;n</h4>
+                <p>&#272;&#7863;t h&#224;ng nhanh, hi&#7875;n th&#7883; t&#7893;ng ti&#7873;n r&#245; r&#224;ng tr&#432;&#7899;c khi x&#225;c nh&#7853;n.</p>
+            </article>
+            <article class="footer-card">
+                <h4>H&#7895; tr&#7907;</h4>
+                <p>Bong b&#243;ng chat n&#7857;m g&#7885;n &#7903; g&#243;c ph&#7843;i &#273;&#7875; h&#7887;i nhanh khi c&#7847;n.</p>
+            </article>
+        </div>
+    </footer>
+
+    <div class="chat-widget">
+        <input class="chat-widget-toggle" type="checkbox" id="chatWidgetToggle" th:checked="${chatOpen}">
+        <div class="chat-widget-panel">
+            <div class="chat-widget-header">
+                <strong>T&#432; v&#7845;n s&#7843;n ph&#7849;m</strong>
+            </div>
+            <div class="chat-widget-body">
+                <div class="chat-feed" th:if="${chatHistory != null and !#lists.isEmpty(chatHistory.history())}">
+                    <div th:each="message : ${chatHistory.history()}"
+                         th:class="'bubble ' + ${#strings.equalsIgnoreCase(message.senderType(), 'AI') ? 'ai' : 'user'}">
+                        <div th:text="${message.messageText()}"></div>
+                    </div>
+                </div>
+                <div class="chat-feed" th:if="${chatHistory == null or #lists.isEmpty(chatHistory.history())}">
+                    <div class="bubble ai">Ch&#224;o b&#7841;n, b&#7841;n c&#7847;n t&#236;m s&#7843;n ph&#7849;m nh&#432; th&#7871; n&#224;o?</div>
+                </div>
+                <form class="chat-compose" method="post" th:action="@{/agent/chat}">
+                    <input type="hidden" name="returnPage" value="products">
+                    <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                    <input type="hidden" name="chatGuestName" th:value="${#strings.isEmpty(chatGuestName) ? 'Kh&#225;ch h&#224;ng' : chatGuestName}">
+                    <div class="chat-compose-row">
+                        <input id="chatMessageProducts" type="text" name="chatMessage" placeholder="Nh&#7855;n &#273;&#7875; t&#236;m s&#7843;n ph&#7849;m ph&#249; h&#7907;p">
+                        <button type="submit" class="primary-btn">G&#7917;i</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <label class="chat-widget-button" for="chatWidgetToggle">Chat</label>
+    </div>
+</main>
+</body>
+</html>

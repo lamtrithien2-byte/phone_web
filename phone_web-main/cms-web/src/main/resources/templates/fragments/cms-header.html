@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="header(title, description, activePage, isAdmin, dashboardUrl, productManagementUrl, voucherManagementUrl, salesUrl, customerLookupUrl, employeesUrl, profileUrl, shopUrl)"
+         class="cms-header">
+    <div class="cms-header-top">
+        <div class="cms-header-copy">
+            <h1 class="cms-header-title" th:text="${title}">Tiêu đề</h1>
+            <p class="cms-header-description" th:text="${description}">Mô tả trang</p>
+        </div>
+        <div class="cms-header-actions">
+            <a class="cms-page-profile"
+               th:href="${profileUrl}"
+               th:classappend="${activePage == 'profile'} ? ' active' : ''"
+               title="Hồ sơ">O</a>
+            <a class="cms-page-nav-link" th:href="${shopUrl}" target="_blank">Xem shop</a>
+            <form method="post" action="/logout">
+                <button type="submit">Đăng xuất</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="cms-page-nav">
+        <a class="cms-page-nav-link"
+           th:href="${dashboardUrl}"
+           th:classappend="${activePage == 'dashboard'} ? ' active' : ''">Tổng quan</a>
+        <a class="cms-page-nav-link"
+           th:if="${isAdmin}"
+           th:href="${productManagementUrl}"
+           th:classappend="${activePage == 'products'} ? ' active' : ''">Sản phẩm</a>
+        <a class="cms-page-nav-link"
+           th:if="${isAdmin}"
+           th:href="${voucherManagementUrl}"
+           th:classappend="${activePage == 'vouchers'} ? ' active' : ''">Voucher</a>
+        <a class="cms-page-nav-link"
+           th:href="${salesUrl}"
+           th:classappend="${activePage == 'sales'} ? ' active' : ''">Bán hàng</a>
+        <a class="cms-page-nav-link"
+           th:href="${customerLookupUrl}"
+           th:classappend="${activePage == 'customerLookup'} ? ' active' : ''">Tra cứu khách</a>
+        <a class="cms-page-nav-link"
+           th:if="${isAdmin}"
+           th:href="${employeesUrl}"
+           th:classappend="${activePage == 'employees'} ? ' active' : ''">Nhân viên</a>
+        <div class="cms-page-nav-spacer"></div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý nhân viên</title>
+    <link rel="stylesheet" href="/css/cms-header.css">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --ink: #172033;
+            --brand: #18354a;
+            --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+        a { color: inherit; text-decoration: none; }
+        .page { max-width: 1420px; margin: 0 auto; padding: 32px 20px 48px; }
+        .grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 20px; }
+        .card { background: var(--panel); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        input, button { width: 100%; box-sizing: border-box; padding: 11px 12px; margin: 8px 0 12px; border-radius: 10px; border: 1px solid #ced6dd; font: inherit; }
+        button { background: var(--brand); color: #fff; border: 0; font-weight: 700; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid #edf1f5; text-align: left; }
+        .ok { color: #166534; font-weight: 700; }
+        .err { color: #a12626; font-weight: 700; }
+        @media (max-width: 1100px) {
+            .grid, .row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+            <section th:replace="~{fragments/cms-header :: header(
+        title='Qu&#7843;n l&#253; nh&#226;n vi&#234;n',
+        description='Theo d&#245;i tr&#7841;ng th&#225;i t&#224;i kho&#7843;n v&#224; t&#7841;o m&#7899;i nh&#226;n vi&#234;n trong c&#249;ng m&#7897;t b&#7889; c&#7909;c qu&#7843;n tr&#7883; th&#7889;ng nh&#7845;t.',
+        activePage=${activePage},
+        isAdmin=${true},
+        dashboardUrl=${dashboardUrl},
+        productManagementUrl=${productManagementUrl},
+        voucherManagementUrl=${voucherManagementUrl},
+        salesUrl=${salesUrl},
+        customerLookupUrl=${customerLookupUrl},
+        employeesUrl=${employeesUrl},
+        profileUrl=${profileUrl},
+        shopUrl=${shopUrl}
+    )}"></section>
+    <p th:if="${success}" th:text="${success}" class="ok"></p>
+    <p th:if="${error}" th:text="${error}" class="err"></p>
+    <div class="grid">
+        <section class="card">
+            <h2>Thêm nhân viên</h2>
+            <form method="post" action="/employees">
+                <div class="row">
+                    <div>
+                        <label>Tên đăng nhập</label>
+                        <input type="text" name="userName" required>
+                    </div>
+                    <div>
+                        <label>Mật khẩu</label>
+                        <input type="text" name="password" value="TDTU2088" required>
+                    </div>
+                </div>
+                <label>Họ và tên</label>
+                <input type="text" name="fullName" required>
+                <label>Email</label>
+                <input type="email" name="email" required>
+                <label>Địa chỉ</label>
+                <input type="text" name="address" required>
+                <label>Số điện thoại</label>
+                <input type="text" name="phoneNumber" required>
+                <button type="submit">Tạo nhân viên</button>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Danh sách nhân viên</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Email</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="staff : ${staffList}">
+                    <td th:text="${staff.id()}"></td>
+                    <td th:text="${staff.fullName()}"></td>
+                    <td th:text="${staff.userName()}"></td>
+                    <td th:text="${staff.email()}"></td>
+                    <td th:text="${staff.isDeleted()} ? 'Đã khóa' : 'Đang hoạt động'"></td>
+                    <td>
+                        <form method="post" action="/employees/toggle">
+                            <input type="hidden" name="staffId" th:value="${staff.id()}">
+                            <button type="submit" th:text="${staff.isDeleted()} ? 'Mở lại' : 'Khóa'"></button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${product.name()} + ' | Phone Store'">Chi ti&#7871;t s&#7843;n ph&#7849;m</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Chi ti&#7871;t s&#7843;n ph&#7849;m</span>
+        <span><a th:href="@{/products}">Quay l&#7841;i danh s&#225;ch</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>Th&#244;ng tin s&#7843;n ph&#7849;m</span>
+            </div>
+        </a>
+        <div class="search-bar">
+            <input type="text" th:value="${product.name()}" readonly>
+            <a class="ghost-btn" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+        </div>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>Gi&#225; b&#225;n</strong>
+                <span th:text="${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">0 VND</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">T&#7845;t c&#7843; s&#7843;n ph&#7849;m</a>
+            <a class="nav-chip" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+            <a class="nav-chip" href="#related-products">S&#7843;n ph&#7849;m li&#234;n quan</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="detail-layout">
+        <section class="detail-gallery">
+            <div class="mini-tag" th:text="${product.categoryName()}">Danh m&#7909;c</div>
+            <img th:if="${product.imageLink() != null and !#strings.isEmpty(product.imageLink())}"
+                 th:src="${product.imageLink()}"
+                 th:alt="${product.name()}">
+            <div class="media-fallback" style="min-height:360px;" th:if="${product.imageLink() == null or #strings.isEmpty(product.imageLink())}">
+                <span th:text="${product.name()}">&#272;i&#7879;n tho&#7841;i</span>
+            </div>
+        </section>
+
+        <aside class="detail-info">
+            <div class="status-tag" th:text="${product.barCode()}">SKU</div>
+            <h1 class="product-title" style="font-size:28px; margin-top:12px;" th:text="${product.name()}">T&#234;n s&#7843;n ph&#7849;m</h1>
+            <div class="price" style="margin:14px 0;" th:text="${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">0 VND</div>
+            <p class="muted" th:text="${product.description()}">M&#244; t&#7843; s&#7843;n ph&#7849;m</p>
+
+            <div class="spec-grid">
+                <div class="spec-card">
+                    <strong>Danh m&#7909;c</strong>
+                    <div class="muted" th:text="${product.categoryName()}">Danh m&#7909;c</div>
+                </div>
+                <div class="spec-card">
+                    <strong>M&#224;n h&#236;nh</strong>
+                    <div class="muted" th:text="${product.screenSize()}">6.7 inch</div>
+                </div>
+                <div class="spec-card">
+                    <strong>RAM</strong>
+                    <div class="muted" th:text="${product.ram()}">8GB</div>
+                </div>
+                <div class="spec-card">
+                    <strong>ROM</strong>
+                    <div class="muted" th:text="${product.rom()}">256GB</div>
+                </div>
+            </div>
+
+            <form method="post" th:action="@{/checkout}">
+                <input type="hidden" name="productId" th:value="${product.id()}">
+                <div class="field-grid single">
+                    <div>
+                        <label for="quantity">S&#7889; l&#432;&#7907;ng</label>
+                        <input id="quantity" type="number" name="quantity" min="1" th:value="${quantity}">
+                    </div>
+                </div>
+                <div class="button-row" style="margin-top:14px;">
+                    <a class="ghost-btn" th:href="@{/products}">Quay l&#7841;i</a>
+                    <button type="submit" class="primary-btn">&#272;&#7871;n b&#432;&#7899;c &#273;&#7863;t mua</button>
+                </div>
+            </form>
+        </aside>
+    </section>
+
+    <section class="panel" id="related-products" style="margin-top:18px;">
+        <div class="section-head">
+            <div>
+                <div class="mini-tag">G&#7907;i &#253; th&#234;m</div>
+                <h2>S&#7843;n ph&#7849;m c&#249;ng nh&#243;m</h2>
+            </div>
+        </div>
+        <div class="product-grid">
+            <article class="product-card" th:each="item : ${relatedProducts}">
+                <div class="product-media">
+                    <img th:if="${item.imageLink() != null and !#strings.isEmpty(item.imageLink())}"
+                         th:src="${item.imageLink()}"
+                         th:alt="${item.name()}">
+                    <div class="media-fallback" th:if="${item.imageLink() == null or #strings.isEmpty(item.imageLink())}">
+                        <span th:text="${item.name()}">&#272;i&#7879;n tho&#7841;i</span>
+                    </div>
+                </div>
+                <div class="product-body">
+                    <div class="status-tag" th:text="${item.categoryName()}">Danh m&#7909;c</div>
+                    <h3 class="product-title" th:text="${item.name()}">S&#7843;n ph&#7849;m</h3>
+                    <div class="price" th:text="${#numbers.formatInteger(item.priceSale(), 0, 'COMMA')} + ' VND'">0 VND</div>
+                    <a class="ghost-btn" th:href="@{/products/{id}(id=${item.id()},chatSessionCode=${chatSessionCode},chatGuestName=${chatGuestName})}">Xem chi ti&#7871;t</a>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <div class="chat-widget">
+        <input class="chat-widget-toggle" type="checkbox" id="chatWidgetToggle" th:checked="${chatOpen}">
+        <div class="chat-widget-panel">
+            <div class="chat-widget-header">
+                <strong>T&#432; v&#7845;n s&#7843;n ph&#7849;m</strong>
+            </div>
+            <div class="chat-widget-body">
+                <div class="chat-feed" th:if="${chatHistory != null and !#lists.isEmpty(chatHistory.history())}">
+                    <div th:each="message : ${chatHistory.history()}"
+                         th:class="'bubble ' + ${#strings.equalsIgnoreCase(message.senderType(), 'AI') ? 'ai' : 'user'}">
+                        <div th:text="${message.messageText()}"></div>
+                    </div>
+                </div>
+                <div class="chat-feed" th:if="${chatHistory == null or #lists.isEmpty(chatHistory.history())}">
+                    <div class="bubble ai">Ch&#224;o b&#7841;n, b&#7841;n c&#7847;n t&#236;m s&#7843;n ph&#7849;m nh&#432; th&#7871; n&#224;o?</div>
+                </div>
+                <form class="chat-compose" method="post" th:action="@{/agent/chat}">
+                    <input type="hidden" name="returnPage" value="detail">
+                    <input type="hidden" name="productId" th:value="${product.id()}">
+                    <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                    <input type="hidden" name="chatGuestName" th:value="${#strings.isEmpty(chatGuestName) ? 'Kh&#225;ch h&#224;ng' : chatGuestName}">
+                    <div class="chat-compose-row">
+                        <input id="chatMessageDetail" type="text" name="chatMessage" placeholder="Nh&#7855;n &#273;&#7875; t&#236;m s&#7843;n ph&#7849;m ph&#249; h&#7907;p">
+                        <button type="submit" class="primary-btn">G&#7917;i</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <label class="chat-widget-button" for="chatWidgetToggle">Chat</label>
+    </div>
+</main>
+</body>
+</html>

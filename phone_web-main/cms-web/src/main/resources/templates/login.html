@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập CMS</title>
+    <style>
+        :root {
+            --bg: #efe6d3;
+            --panel: #fffaf1;
+            --ink: #1f252b;
+            --muted: #5d6a73;
+            --admin: #17384f;
+            --staff: #b04a2f;
+            --line: rgba(31, 37, 43, 0.12);
+            --error-bg: #fde9e4;
+            --error-fg: #8c2d1a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(176, 74, 47, 0.18), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(23, 56, 79, 0.22), transparent 30%),
+                linear-gradient(135deg, #f3ead7, #d9e4e8);
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .shell {
+            width: min(1080px, 100%);
+            display: grid;
+            grid-template-columns: 1.15fr 0.95fr;
+            background: rgba(255, 250, 241, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 24px 70px rgba(24, 31, 38, 0.18);
+            backdrop-filter: blur(12px);
+        }
+
+        .roles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 640px;
+        }
+
+        .role-card {
+            position: relative;
+            padding: 40px 32px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid var(--line);
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .role-card:last-child { border-right: 0; }
+        .role-card:hover { transform: translateY(-3px); }
+        .role-card.admin { background: linear-gradient(180deg, rgba(23, 56, 79, 0.06), transparent 60%); }
+        .role-card.staff { background: linear-gradient(180deg, rgba(176, 74, 47, 0.08), transparent 60%); }
+        .role-card.active { background-color: rgba(255, 255, 255, 0.46); }
+
+        .role-badge {
+            width: fit-content;
+            padding: 8px 12px;
+            border-radius: 999px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font: 700 12px/1.1 Arial, sans-serif;
+        }
+
+        .admin .role-badge { background: rgba(23, 56, 79, 0.12); color: var(--admin); }
+        .staff .role-badge { background: rgba(176, 74, 47, 0.12); color: var(--staff); }
+
+        .role-card h2 {
+            margin: 18px 0 10px;
+            font-size: 34px;
+        }
+
+        .role-card p {
+            margin: 0;
+            font: 400 16px/1.7 Arial, sans-serif;
+            color: var(--muted);
+            max-width: 28ch;
+        }
+
+        .role-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 24px;
+            font: 700 14px/1.2 Arial, sans-serif;
+        }
+
+        .role-footer span:last-child { opacity: 0.55; }
+
+        .form-panel {
+            padding: 40px 38px;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            border-left: 1px solid rgba(31, 37, 43, 0.08);
+        }
+
+        .form-card { width: 100%; }
+
+        .eyebrow {
+            margin: 0 0 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font: 700 12px/1.2 Arial, sans-serif;
+            color: var(--muted);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 42px;
+            line-height: 1.05;
+        }
+
+        .lead {
+            margin: 0 0 28px;
+            color: var(--muted);
+            font: 400 15px/1.7 Arial, sans-serif;
+        }
+
+        .error {
+            background: var(--error-bg);
+            color: var(--error-fg);
+            padding: 14px 16px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            font: 600 14px/1.5 Arial, sans-serif;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font: 700 14px/1.2 Arial, sans-serif;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 15px;
+            margin-bottom: 16px;
+            border-radius: 14px;
+            border: 1px solid #d4d9de;
+            background: #fff;
+            font: 400 15px/1.2 Arial, sans-serif;
+        }
+
+        .submit {
+            width: 100%;
+            border: 0;
+            border-radius: 14px;
+            padding: 15px 18px;
+            color: #fff;
+            cursor: pointer;
+            font: 700 15px/1.2 Arial, sans-serif;
+        }
+
+        .submit.admin { background: var(--admin); }
+        .submit.staff { background: var(--staff); }
+
+        .meta {
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            font: 400 14px/1.5 Arial, sans-serif;
+            color: var(--muted);
+        }
+
+        .meta a { color: inherit; }
+
+        @media (max-width: 920px) {
+            .shell { grid-template-columns: 1fr; }
+            .roles { min-height: auto; }
+            .form-panel {
+                border-left: 0;
+                border-top: 1px solid rgba(31, 37, 43, 0.08);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .roles { grid-template-columns: 1fr; }
+            .role-card {
+                min-height: 260px;
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+            .role-card:last-child { border-bottom: 0; }
+            .form-panel, .role-card { padding: 28px 22px; }
+            h1 { font-size: 34px; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="shell">
+        <div class="roles">
+            <a class="role-card admin"
+               th:classappend="${selectedRole == 'admin' ? ' active' : ''}"
+               th:href="@{/login(role='admin')}">
+                <div>
+                    <div class="role-badge">Admin Zone</div>
+                    <h2>Admin</h2>
+                    <p>Quản lý nhân viên, sản phẩm, voucher và toàn bộ thông tin của cửa hàng.</p>
+                </div>
+                <div class="role-footer">
+                    <span>Mở giao diện admin</span>
+                    <span th:text="${selectedRole == 'admin' ? 'Đang chọn' : 'Chọn'}"></span>
+                </div>
+            </a>
+            <a class="role-card staff"
+               th:classappend="${selectedRole == 'staff' ? ' active' : ''}"
+               th:href="@{/login(role='staff')}">
+                <div>
+                    <div class="role-badge">Sales Desk</div>
+                    <h2>Staff</h2>
+                    <p>Bán hàng tại quầy, tạo đơn, tìm khách hàng và xử lý giao dịch mỗi ngày.</p>
+                </div>
+                <div class="role-footer">
+                    <span>Mở giao diện staff</span>
+                    <span th:text="${selectedRole == 'staff' ? 'Đang chọn' : 'Chọn'}"></span>
+                </div>
+            </a>
+        </div>
+
+        <div class="form-panel">
+            <form class="form-card" method="post" action="/login">
+                <p class="eyebrow" th:text="${selectedRole == 'staff' ? 'Đăng nhập Staff' : 'Đăng nhập Admin'}"></p>
+                <h1 th:text="${selectedRole == 'staff' ? 'Đăng nhập nhân viên' : 'Đăng nhập quản trị'}"></h1>
+                <p class="lead"
+                   th:text="${selectedRole == 'staff'}
+                       ? 'Nhập tài khoản nhân viên để vào màn hình bán hàng và thao tác tại quầy.'
+                       : 'Nhập tài khoản quản trị để quản lý vận hành, sản phẩm và báo cáo.'"></p>
+
+                <div class="error" th:if="${error}" th:text="${error}"></div>
+
+                <input type="hidden" name="role" th:value="${selectedRole}">
+
+                <label for="username">Tên đăng nhập</label>
+                <input id="username" name="username" th:value="${username}" required>
+
+                <label for="password">Mật khẩu</label>
+                <input id="password" type="password" name="password" required>
+
+                <button class="submit"
+                        type="submit"
+                        th:classappend="${selectedRole == 'staff' ? ' staff' : ' admin'}">
+                    Đăng nhập
+                </button>
+
+                <div class="meta">
+                    <span th:text="${selectedRole == 'staff' ? 'Vai trò hiện tại: Staff' : 'Vai trò hiện tại: Admin'}"></span>
+                    <a href="/forgot-password">Quên mật khẩu?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

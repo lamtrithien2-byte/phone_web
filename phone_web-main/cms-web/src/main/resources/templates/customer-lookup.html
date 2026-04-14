@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tra cứu khách</title>
+    <link rel="stylesheet" href="/css/cms-header.css">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --ink: #172033;
+            --muted: #667085;
+            --brand: #18354a;
+            --brand-soft: #edf4fb;
+            --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+        a { color: inherit; text-decoration: none; }
+        .page { max-width: 1420px; margin: 0 auto; padding: 32px 20px 48px; }
+
+        .toolbar { display: grid; grid-template-columns: minmax(280px, 420px) auto auto; gap: 16px; margin-bottom: 18px; align-items: end; }
+        .field { display: grid; gap: 8px; }
+        label { font-size: 13px; font-weight: 700; color: #334155; }
+        input, button {
+            width: 100%; border-radius: 14px; border: 1px solid #d4dbe4; padding: 12px 14px; font: inherit;
+        }
+        button { border: 0; cursor: pointer; font-weight: 700; }
+        .primary-btn { background: var(--brand); color: #fff; }
+        .ghost-btn { background: #eff4f8; color: var(--brand); }
+
+        .layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; }
+        .card { background: var(--panel); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); }
+        .section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+        .section-head h2, .section-head h3 { margin: 0; }
+        .section-head p { margin: 6px 0 0; color: var(--muted); line-height: 1.6; }
+        .tag {
+            display: inline-flex; align-items: center; padding: 7px 11px; border-radius: 999px;
+            background: var(--brand-soft); color: var(--brand); font-size: 12px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .summary-box, .history-item, .detail-item {
+            padding: 14px 16px; border-radius: 16px; background: #fff; border: 1px solid #edf1f5;
+        }
+        .summary-box strong, .history-item strong, .detail-item strong { display: block; margin-bottom: 6px; }
+        .history-list, .detail-list { display: grid; gap: 12px; }
+        .muted { color: var(--muted); line-height: 1.55; }
+        .empty {
+            padding: 16px; border-radius: 16px; background: #f8fafc; border: 1px dashed #d7dee7; color: var(--muted);
+        }
+        .error { margin-bottom: 16px; color: #a12626; font-weight: 700; }
+
+        @media (max-width: 1100px) {
+            .layout, .toolbar { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+            <section th:replace="~{fragments/cms-header :: header(
+        title='Tra c&#7913;u kh&#225;ch',
+        description='T&#236;m kh&#225;ch theo s&#7889; &#273;i&#7879;n tho&#7841;i, xem l&#7883;ch s&#7917; mua v&#224; m&#7903; chi ti&#7871;t &#273;&#417;n ngay trong m&#7897;t header c&#243; b&#7889; c&#7909;c c&#7889; &#273;&#7883;nh.',
+        activePage=${activePage},
+        isAdmin=${isAdmin},
+        dashboardUrl=${dashboardUrl},
+        productManagementUrl=${productManagementUrl},
+        voucherManagementUrl=${voucherManagementUrl},
+        salesUrl=${salesUrl},
+        customerLookupUrl=${customerLookupUrl},
+        employeesUrl=${employeesUrl},
+        profileUrl=${profileUrl},
+        shopUrl=${shopUrl}
+    )}"></section>
+
+    <p th:if="${error}" th:text="${error}" class="error"></p>
+
+    <form method="get" action="/customers/lookup" class="toolbar">
+        <div class="field">
+            <label for="phoneNumber">Số điện thoại khách</label>
+            <input id="phoneNumber" type="text" name="phoneNumber" th:value="${phoneNumber}" placeholder="0901234567">
+        </div>
+        <div class="field">
+            <button type="submit" class="primary-btn">Tra cứu</button>
+        </div>
+        <div class="field">
+            <a href="/customers/lookup" class="ghost-btn" style="display:inline-flex; align-items:center; justify-content:center;">Làm mới</a>
+        </div>
+    </form>
+
+    <section class="layout">
+        <section class="card">
+            <div class="section-head">
+                <div>
+                <div class="tag">Khách hàng</div>
+                    <h2>Đơn hàng của khách</h2>
+                </div>
+            </div>
+
+            <div class="summary-box" th:if="${customer != null}">
+                <strong>Thông tin đơn hàng</strong>
+                <div class="muted" th:text="'Tên khách hàng: ' + ${customer.fullName()}">Tên khách hàng</div>
+                <div class="muted" th:text="'Số điện thoại: ' + ${customer.phoneNumber()}">Số điện thoại</div>
+                <div class="muted" th:text="'Địa chỉ: ' + ${customer.address() != null && !customer.address().isBlank() ? customer.address() : 'Chưa cập nhật'}">Địa chỉ</div>
+                <div class="muted" th:text="'Nhân viên bán: ' + ${selectedHistory != null ? selectedHistory.salesStaffName() : 'Chưa có'}">Nhân viên bán</div>
+            </div>
+            <div class="empty" th:if="${customer == null}">
+                Chưa có thông tin khách. Hãy nhập số điện thoại để tra cứu.
+            </div>
+
+            <div class="history-list" th:if="${!#lists.isEmpty(customerHistory)}" style="margin-top:14px;">
+                <article class="history-item" th:each="history : ${customerHistory}">
+                    <strong>
+                        <a th:href="@{/customers/lookup(phoneNumber=${phoneNumber}, recordCode=${history.invoiceCode()})}"
+                           th:text="${'Đơn ngày ' + #dates.format(history.createdDate(), 'dd/MM/yyyy HH:mm')}"></a>
+                    </strong>
+                    <div class="muted" th:text="${customer != null ? customer.fullName() : history.customerName()}">Tên khách</div>
+                    <div class="muted" th:text="'Nhân viên bán: ' + ${history.salesStaffName()}">Nhân viên bán</div>
+                    <div class="muted" th:text="'Tổng tiền: ' + ${history.totalMoney()} + ' VND'">Tổng tiền</div>
+                </article>
+            </div>
+            <div class="empty" th:if="${customer != null and #lists.isEmpty(customerHistory)}" style="margin-top:14px;">
+                Không có đơn hàng nào cho số điện thoại này.
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="section-head">
+                <div>
+                    <div class="tag">Chi tiết</div>
+                    <h3>Sản phẩm trong đơn</h3>
+                    <p>Nhập số điện thoại để xem danh sách đơn, sau đó bấm vào từng đơn để xem chi tiết.</p>
+                </div>
+            </div>
+
+            <div class="detail-list" th:if="${!#lists.isEmpty(invoiceDetails)}">
+                <article class="detail-item" th:each="detail : ${invoiceDetails}">
+                    <strong th:text="${detail.productName()}">Sản phẩm</strong>
+                    <div class="muted" th:text="'Số lượng: ' + ${detail.quantity()} + ' | Đơn giá: ' + ${detail.unitPrice()} + ' VND'"></div>
+                </article>
+            </div>
+
+            <div class="detail-list" th:if="${!#lists.isEmpty(orderDetails)}">
+                <article class="detail-item" th:each="detail : ${orderDetails}">
+                    <strong th:text="${detail.productName()}">Sản phẩm</strong>
+                    <div class="muted" th:text="'Số lượng: ' + ${detail.quantity()} + ' | Đơn giá: ' + ${detail.unitPrice()} + ' VND'"></div>
+                    <div class="muted" th:text="'Trạng thái: ' + ${detail.orderStatus()} + ' / ' + ${detail.paymentStatus()}"></div>
+                    <div class="muted" th:text="'Địa chỉ giao: ' + ${detail.shippingAddress()}"></div>
+                </article>
+            </div>
+
+            <div class="empty" th:if="${#lists.isEmpty(invoiceDetails) and #lists.isEmpty(orderDetails)}">
+                Chưa có chi tiết để hiển thị.
+            </div>
+        </section>
+    </section>
+</div>
+</body>
+</html>

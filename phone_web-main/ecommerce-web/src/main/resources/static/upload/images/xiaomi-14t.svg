@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#7c2d12"/>
+      <stop offset="100%" stop-color="#fb923c"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" rx="48" fill="url(#bg)"/>
+  <rect x="245" y="90" width="310" height="620" rx="34" fill="#111827" stroke="#fed7aa" stroke-width="10"/>
+  <rect x="272" y="120" width="256" height="560" rx="22" fill="#ffedd5"/>
+  <rect x="322" y="188" width="156" height="156" rx="22" fill="#fdba74"/>
+  <circle cx="360" cy="226" r="22" fill="#7c2d12"/>
+  <circle cx="440" cy="226" r="22" fill="#7c2d12"/>
+  <circle cx="360" cy="306" r="22" fill="#7c2d12"/>
+  <circle cx="440" cy="306" r="22" fill="#7c2d12"/>
+  <text x="400" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" fill="#7c2d12">Xiaomi 14T</text>
+</svg>

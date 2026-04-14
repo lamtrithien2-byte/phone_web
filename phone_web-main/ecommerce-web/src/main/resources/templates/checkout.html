@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Phone Store | &#272;&#7863;t mua</title>
+    <link rel="stylesheet" th:href="@{/storefront.css}">
+</head>
+<body>
+<div class="top-strip">
+    <div class="inner">
+        <span>Ho&#224;n t&#7845;t &#273;&#7863;t mua</span>
+        <span><a th:href="@{/products/{id}(id=${product.id()})}">Quay l&#7841;i s&#7843;n ph&#7849;m</a></span>
+    </div>
+</div>
+
+<header class="main-header">
+    <div class="inner">
+        <a class="brand-block" th:href="@{/products}">
+            <div class="brand-mark">PS</div>
+            <div class="brand-copy">
+                <strong>Phone Store</strong>
+                <span>X&#225;c nh&#7853;n &#273;&#417;n mua</span>
+            </div>
+        </a>
+        <div class="search-bar">
+            <input type="text" value="X&#225;c nh&#7853;n th&#244;ng tin nh&#7853;n h&#224;ng" readonly>
+            <a class="ghost-btn" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+        </div>
+        <div class="header-side">
+            <div class="quick-pill">
+                <strong>T&#7893;ng ti&#7873;n</strong>
+                <span th:text="${#numbers.formatInteger(grandTotal, 0, 'COMMA')} + ' VND'">0 VND</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="main-nav">
+    <div class="inner">
+        <div class="nav-list">
+            <a class="nav-chip" th:href="@{/products}">S&#7843;n ph&#7849;m</a>
+            <a class="nav-chip" th:href="@{/products/{id}(id=${product.id()})}">Chi ti&#7871;t</a>
+            <a class="nav-chip" th:href="@{/tracking}">Tra c&#7913;u &#273;&#417;n</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div th:if="${success}" class="alert ok" th:text="${success}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+
+    <section class="checkout-layout">
+        <section class="checkout-form">
+            <div class="section-head">
+                <div>
+                    <div class="mini-tag">Th&#244;ng tin nh&#7853;n h&#224;ng</div>
+                    <h1>Ho&#224;n t&#7845;t &#273;&#417;n mua</h1>
+                    <p>Nh&#7853;p th&#244;ng tin ng&#432;&#7901;i nh&#7853;n v&#224; &#225;p voucher tr&#432;&#7899;c khi x&#225;c nh&#7853;n.</p>
+                </div>
+            </div>
+
+            <form method="post" th:action="@{/checkout/confirm}">
+                <input type="hidden" name="productId" th:value="${product.id()}">
+                <input type="hidden" name="quantity" th:value="${quantity}">
+                <input type="hidden" name="shippingFee" th:value="${shippingFee}">
+                <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                <input type="hidden" name="chatGuestName" th:value="${chatGuestName}">
+
+                <div class="field-grid">
+                    <div>
+                        <label for="fullName">H&#7885; v&#224; t&#234;n</label>
+                        <input id="fullName" type="text" name="fullName" th:value="${fullName}" required>
+                    </div>
+                    <div>
+                        <label for="phoneNumber">S&#7889; &#273;i&#7879;n tho&#7841;i</label>
+                        <input id="phoneNumber" type="text" name="phoneNumber" th:value="${phoneNumber}" required>
+                    </div>
+                </div>
+
+                <div class="field-grid single">
+                    <div>
+                        <label for="shippingAddress">&#272;&#7883;a ch&#7881; nh&#7853;n h&#224;ng</label>
+                        <input id="shippingAddress" type="text" name="shippingAddress" th:value="${shippingAddress}" required>
+                    </div>
+                </div>
+
+                <div class="field-grid single">
+                    <div>
+                        <label for="note">Ghi ch&#250;</label>
+                        <input id="note" type="text" name="note" th:value="${note}" placeholder="V&#237; d&#7909;: g&#7885;i tr&#432;&#7899;c khi giao">
+                    </div>
+                </div>
+
+                <div class="field-grid single">
+                    <div>
+                        <label for="voucherCode">M&#227; voucher</label>
+                        <div style="display:flex; gap:10px;">
+                            <input id="voucherCode" type="text" name="voucherCode" th:value="${voucherCode}" placeholder="Nh&#7853;p m&#227; gi&#7843;m gi&#225;">
+                            <button type="submit" class="ghost-btn" formaction="/checkout/apply-voucher">&#193;p m&#227;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-row" style="margin-top:14px;">
+                    <a class="ghost-btn" th:href="@{/products/{id}(id=${product.id()})}">Quay l&#7841;i</a>
+                    <button type="submit" class="primary-btn">X&#225;c nh&#7853;n &#273;&#7863;t mua</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="checkout-summary">
+            <div class="mini-tag">Th&#244;ng tin &#273;&#417;n</div>
+            <h2 class="product-title" th:text="${product.name()}">S&#7843;n ph&#7849;m</h2>
+            <div class="muted" th:text="${product.categoryName()}">Danh m&#7909;c</div>
+            <div class="muted" th:text="'RAM ' + ${product.ram()} + ' | B&#7897; nh&#7899; ' + ${product.rom()}">Th&#244;ng s&#7889;</div>
+
+            <div class="summary-list" style="margin-top:16px;">
+                <div class="summary-box">
+                    <div class="summary-line" th:text="'S&#7889; l&#432;&#7907;ng: ' + ${quantity}">S&#7889; l&#432;&#7907;ng</div>
+                    <div class="summary-line" th:text="'Gi&#225; s&#7843;n ph&#7849;m: ' + ${#numbers.formatInteger(product.priceSale(), 0, 'COMMA')} + ' VND'">Gi&#225;</div>
+                    <div class="summary-line" th:text="'T&#7841;m t&#237;nh: ' + ${#numbers.formatInteger(subtotal, 0, 'COMMA')} + ' VND'">T&#7841;m t&#237;nh</div>
+                    <div class="summary-line" th:text="'T&#7893;ng tr&#432;&#7899;c gi&#7843;m: ' + ${#numbers.formatInteger(totalBeforeDiscount, 0, 'COMMA')} + ' VND'">T&#7893;ng tr&#432;&#7899;c gi&#7843;m</div>
+                    <div class="summary-line" th:if="${appliedVoucher != null}" th:text="'Voucher ' + ${appliedVoucher.voucherCode()} + ': -' + ${#numbers.formatInteger(discountMoney, 0, 'COMMA')} + ' VND'">Voucher</div>
+                    <div class="summary-line" th:if="${appliedVoucher != null}" th:text="'Lo&#7841;i: ' + ${appliedVoucher.voucherType()}">Lo&#7841;i</div>
+                    <div class="price" style="margin-top:10px;" th:text="${#numbers.formatInteger(grandTotal, 0, 'COMMA')} + ' VND'">T&#7893;ng ti&#7873;n</div>
+                </div>
+
+                <div class="summary-box" th:if="${createdOrder != null}">
+                    <strong>&#272;&#7863;t mua th&#224;nh c&#244;ng</strong>
+                    <div class="summary-line" th:text="'M&#227; &#273;&#417;n: ' + ${createdOrder.orderCode()}">M&#227; &#273;&#417;n</div>
+                    <div class="summary-line" th:text="'T&#7841;m t&#237;nh: ' + ${#numbers.formatInteger(createdOrder.subtotalMoney(), 0, 'COMMA')} + ' VND'">T&#7841;m t&#237;nh</div>
+                    <div class="summary-line" th:text="'Gi&#7843;m gi&#225;: ' + ${#numbers.formatInteger(createdOrder.discountMoney(), 0, 'COMMA')} + ' VND'">Gi&#7843;m gi&#225;</div>
+                    <div class="summary-line" th:text="'T&#7893;ng ti&#7873;n: ' + ${#numbers.formatInteger(createdOrder.totalMoney(), 0, 'COMMA')} + ' VND'">T&#7893;ng ti&#7873;n</div>
+                    <div class="button-row" style="margin-top:12px;">
+                        <a class="ghost-btn" th:href="@{/tracking(phoneNumber=${phoneNumber},orderCode=${createdOrder.orderCode()})}">Tra c&#7913;u &#273;&#417;n</a>
+                        <a class="primary-btn" th:href="@{/products}">Ti&#7871;p t&#7909;c mua</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <div class="chat-widget">
+        <input class="chat-widget-toggle" type="checkbox" id="chatWidgetToggle" th:checked="${chatOpen}">
+        <div class="chat-widget-panel">
+            <div class="chat-widget-header">
+                <strong>T&#432; v&#7845;n s&#7843;n ph&#7849;m</strong>
+            </div>
+            <div class="chat-widget-body">
+                <div class="chat-feed" th:if="${chatHistory != null and !#lists.isEmpty(chatHistory.history())}">
+                    <div th:each="message : ${chatHistory.history()}"
+                         th:class="'bubble ' + ${#strings.equalsIgnoreCase(message.senderType(), 'AI') ? 'ai' : 'user'}">
+                        <div th:text="${message.messageText()}"></div>
+                    </div>
+                </div>
+                <div class="chat-feed" th:if="${chatHistory == null or #lists.isEmpty(chatHistory.history())}">
+                    <div class="bubble ai">Ch&#224;o b&#7841;n, b&#7841;n c&#7847;n t&#236;m s&#7843;n ph&#7849;m nh&#432; th&#7871; n&#224;o?</div>
+                </div>
+                <form class="chat-compose" method="post" th:action="@{/agent/chat}">
+                    <input type="hidden" name="returnPage" value="checkout">
+                    <input type="hidden" name="productId" th:value="${product.id()}">
+                    <input type="hidden" name="quantity" th:value="${quantity}">
+                    <input type="hidden" name="fullName" th:value="${fullName}">
+                    <input type="hidden" name="phoneNumber" th:value="${phoneNumber}">
+                    <input type="hidden" name="shippingAddress" th:value="${shippingAddress}">
+                    <input type="hidden" name="note" th:value="${note}">
+                    <input type="hidden" name="voucherCode" th:value="${voucherCode}">
+                    <input type="hidden" name="shippingFee" th:value="${shippingFee}">
+                    <input type="hidden" name="chatSessionCode" th:value="${chatSessionCode}">
+                    <input type="hidden" name="chatGuestName" th:value="${#strings.isEmpty(chatGuestName) ? 'Kh&#225;ch h&#224;ng' : chatGuestName}">
+                    <div class="chat-compose-row">
+                        <input id="chatMessageCheckout" type="text" name="chatMessage" placeholder="Nh&#7855;n &#273;&#7875; t&#236;m s&#7843;n ph&#7849;m ph&#249; h&#7907;p">
+                        <button type="submit" class="primary-btn">G&#7917;i</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <label class="chat-widget-button" for="chatWidgetToggle">Chat</label>
+    </div>
+</main>
+</body>
+</html>

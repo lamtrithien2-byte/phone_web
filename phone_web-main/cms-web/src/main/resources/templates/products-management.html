@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý sản phẩm</title>
+    <link rel="stylesheet" href="/css/cms-header.css">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --ink: #172033;
+            --muted: #667085;
+            --brand: #18354a;
+            --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+        a { color: inherit; text-decoration: none; }
+        .page { max-width: 1420px; margin: 0 auto; padding: 32px 20px 48px; }
+        .toolbar { display: flex; gap: 12px; margin-bottom: 20px; }
+        .toolbar input, .toolbar button { padding: 12px 14px; border-radius: 12px; border: 1px solid #ccd5dd; font-size: 15px; }
+        .toolbar input { flex: 1; }
+        .toolbar button { background: var(--brand); color: #fff; border: 0; cursor: pointer; font-weight: 700; }
+        .layout { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 20px; align-items: start; }
+        .panel, table { background: var(--panel); border-radius: 18px; box-shadow: var(--shadow); }
+        .panel { padding: 20px; }
+        h2 { margin-top: 0; }
+        .product-form input, .product-form textarea, .product-form select {
+            width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; border: 1px solid #ccd5dd; margin-bottom: 12px; font-size: 15px;
+        }
+        .product-form textarea { min-height: 90px; resize: vertical; }
+        .btn, .link-btn, .actions button {
+            display: inline-flex; align-items: center; justify-content: center; padding: 11px 14px; border-radius: 12px;
+            border: 0; background: var(--brand); color: #fff; font-weight: 700; text-decoration: none; cursor: pointer;
+        }
+        .link-btn { background: #eff4f8; color: var(--brand); }
+        table { width: 100%; border-collapse: collapse; overflow: hidden; }
+        th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #eef2f6; }
+        th { background: #eff4f8; }
+        .actions { display: flex; gap: 8px; }
+        .actions form { margin: 0; }
+        .success { color: #166534; font-weight: 700; }
+        .error { color: #a12626; font-weight: 700; }
+        @media (max-width: 1100px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+            <section th:replace="~{fragments/cms-header :: header(
+        title='Qu&#7843;n l&#253; s&#7843;n ph&#7849;m',
+        description='T&#7853;p trung thao t&#225;c th&#234;m, s&#7917;a, t&#236;m ki&#7871;m v&#224; c&#7853;p nh&#7853;t s&#7843;n ph&#7849;m trong m&#7897;t header qu&#7843;n tr&#7883; th&#7889;ng nh&#7845;t.',
+        activePage=${activePage},
+        isAdmin=${true},
+        dashboardUrl=${dashboardUrl},
+        productManagementUrl=${productManagementUrl},
+        voucherManagementUrl=${voucherManagementUrl},
+        salesUrl=${salesUrl},
+        customerLookupUrl=${customerLookupUrl},
+        employeesUrl=${employeesUrl},
+        profileUrl=${profileUrl},
+        shopUrl=${shopUrl}
+    )}"></section>
+
+    <form method="get" action="/products/manage" class="toolbar">
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="Tìm theo tên, mã sản phẩm hoặc danh mục">
+        <button type="submit">Tìm sản phẩm</button>
+    </form>
+
+    <p th:if="${success}" th:text="${success}" class="success"></p>
+    <p th:if="${error}" th:text="${error}" class="error"></p>
+
+    <div class="layout">
+        <section class="panel">
+            <h2 th:text="${editing} ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'"></h2>
+            <form class="product-form" method="post" th:action="${editing} ? '/dashboard/products/update' : '/dashboard/products/create'">
+                <label>Mã sản phẩm</label>
+                <input type="text" name="barCode" th:value="${productForm.barCode()}" th:readonly="${editing}" required>
+                <label>Tên sản phẩm</label>
+                <input type="text" name="name" th:value="${productForm.name()}" required>
+                <label>Kích thước màn hình</label>
+                <input type="text" name="screenSize" th:value="${productForm.screenSize()}">
+                <label>RAM</label>
+                <input type="text" name="ram" th:value="${productForm.ram()}">
+                <label>ROM</label>
+                <input type="text" name="rom" th:value="${productForm.rom()}">
+                <label>Giá nhập</label>
+                <input type="number" name="importPrice" th:value="${productForm.importPrice()}" required>
+                <label>Giá bán</label>
+                <input type="number" name="priceSale" th:value="${productForm.priceSale()}" required>
+                <label>Mô tả</label>
+                <textarea name="description" th:text="${productForm.description()}"></textarea>
+                <label>Hình ảnh</label>
+                <input type="text" name="imageLink" th:value="${productForm.imageLink()}">
+                <label>Số lượng đã bán</label>
+                <input type="number" name="saleNumber" th:value="${productForm.saleNumber() ?: 0}">
+                <label>Danh mục</label>
+                <select name="categoryId" required>
+                    <option th:each="category : ${categories}"
+                            th:value="${category.id()}"
+                            th:text="${category.categoryName()}"
+                            th:selected="${selectedCategoryId != null ? selectedCategoryId == category.id() : productForm.categoryName() == category.categoryName()}">
+                    </option>
+                </select>
+                <button class="btn" type="submit" th:text="${editing} ? 'Lưu thay đổi' : 'Thêm sản phẩm'"></button>
+                <a class="link-btn" href="/products/manage">Làm mới biểu mẫu</a>
+            </form>
+        </section>
+
+        <section>
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Danh mục</th>
+                    <th>RAM</th>
+                    <th>ROM</th>
+                    <th>Giá bán</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="product : ${products}">
+                    <td th:text="${product.id()}"></td>
+                    <td th:text="${product.name()}"></td>
+                    <td th:text="${product.categoryName()}"></td>
+                    <td th:text="${product.ram()}"></td>
+                    <td th:text="${product.rom()}"></td>
+                    <td th:text="${product.priceSale()}"></td>
+                    <td class="actions">
+                        <a class="link-btn" th:href="@{/products/manage(editBarCode=${product.barCode()}, keyword=${keyword})}">Sửa</a>
+                        <form method="post" action="/dashboard/products/delete">
+                            <input type="hidden" name="barCode" th:value="${product.barCode()}">
+                            <button type="submit">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(products)}">
+                    <td colspan="7">Chưa có dữ liệu sản phẩm để hiển thị.</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+</body>
+</html>
